@@ -1,0 +1,158 @@
+# Analyzes new Bundesgesetzblatt publications every hour and builds the static site.
+#
+# Data layout:
+#   branch "data"      results/ and laws/ of the last 365 days (+ newest version of every law);
+#                      its history is squashed to one commit once a month
+#   GitHub Releases    "archiv-YYYY-MM": tar.gz files with data older than 365 days, and
+#                      historie-bis-YYYY-MM.bundle with the full git history before squashing
+#   artifact "site"    the static website (download it, or deploy to Pages – see below)
+#
+# GitHub Pages is off by default: on Free plans Pages does not work for private
+# repositories, and on paid plans the site would be publicly reachable.
+# To enable it later, set the repository variable DEPLOY_PAGES to "true" and
+# choose "GitHub Actions" as the Pages source.
+
+name: Update data
+
+on:
+  schedule:
+    - cron: "23 * * * *"
+  workflow_dispatch:
+    inputs:
+      max_new:
+        description: "Maximum number of new analyses in this run"
+        default: "50"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check out data branch
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin data > /dev/null; then
+            git fetch --depth=1 origin data
+            git worktree add store FETCH_HEAD
+            git -C store switch -c data
+          else
+            git worktree add --orphan -b data store
+          fi
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install
+        run: uv sync --frozen --no-dev
+
+      - name: Analyze new publications and build site
+        env:
+          DIFFGESETZ_DATA: ${{ github.workspace }}/store
+        run: uv run diffgesetz export --site _site --days 365 --max-new "${{ inputs.max_new || '50' }}"
+
+      - name: Move data older than one year to an archive
+        id: prune
+        env:
+          DIFFGESETZ_DATA: ${{ github.workspace }}/store
+        run: |
+          archive="archiv/diffgesetz-archiv-$(date -u +%F).tar.gz"
+          uv run diffgesetz prune --days 365 --archive "$archive"
+          if [ -f "$archive" ]; then echo "archive=$archive" >> "$GITHUB_OUTPUT"; fi
+
+      # One release per month collects that month's archives and the history bundle.
+      - name: Prepare monthly archive release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          month="$(date -u +%Y-%m)"
+          tag="archiv-$month"
+          gh release view "$tag" > /dev/null 2>&1 || \
+            gh release create "$tag" --target "${{ github.sha }}" --title "Datenarchiv $month" \
+              --notes "Auswertungen und Gesetzesfassungen, die älter als ein Jahr sind, sowie die Git-Historie des Branches data bis $month (historie-*.bundle)."
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "month=$month" >> "$GITHUB_OUTPUT"
+          # The history is squashed once per month, after its bundle is safely stored.
+          if gh release view "$tag" --json assets -q '.assets[].name' | grep -qx "historie-bis-$month.bundle"; then
+            echo "squash=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "squash=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload archive as release asset
+        if: steps.prune.outputs.archive != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ steps.release.outputs.tag }}" "${{ steps.prune.outputs.archive }}" --clobber
+
+      - name: Commit data
+        run: |
+          cd store
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No data changes."
+          else
+            git commit -q -m "Daten aktualisiert $(date -u +'%F %H:%M') UTC"
+            git push origin data
+          fi
+
+      # Keeps the repository small: the full history goes into a git bundle in the
+      # release, then the data branch is replaced by a single commit with the current state.
+      # Restore with: git fetch historie-bis-YYYY-MM.bundle data:data-alt
+      - name: Squash data branch history (monthly)
+        if: steps.release.outputs.squash == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          month="${{ steps.release.outputs.month }}"
+          cd store
+          git rev-parse --verify -q data > /dev/null || { echo "Nothing committed yet."; exit 0; }
+          if git ls-remote --exit-code --heads origin data > /dev/null; then
+            git fetch --unshallow origin data 2>/dev/null || git fetch origin data
+          fi
+          git bundle create "../historie-bis-$month.bundle" data
+          git bundle verify "../historie-bis-$month.bundle"
+          gh release upload "${{ steps.release.outputs.tag }}" "../historie-bis-$month.bundle" --clobber
+          git switch --orphan data-squashed
+          git checkout data -- .
+          git commit -q -m "Datenstand $(date -u +'%F %H:%M') UTC (ältere Historie: Release ${{ steps.release.outputs.tag }}, historie-bis-$month.bundle)"
+          git push --force origin data-squashed:data
+
+      - name: Upload site
+        uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: _site
+          include-hidden-files: true
+          retention-days: 7
+
+      - name: Upload Pages artifact
+        if: vars.DEPLOY_PAGES == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy-pages:
+    if: vars.DEPLOY_PAGES == 'true'
+    needs: update
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

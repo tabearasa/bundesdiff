@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>diffgesetz – Was ändert sich im Gesetz?</title>
+  <meta name="description" content="Zeigt für jede Veröffentlichung im Bundesgesetzblatt, wie sich der Gesetzestext ändert – vorher und nachher nebeneinander.">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    // apply the saved colour theme before the first paint (no flash)
+    try { const t = localStorage.getItem("diffgesetz.theme"); if (t) document.documentElement.dataset.theme = t; } catch {}
+  </script>
+  <link rel="stylesheet" href="static/style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%237a2418'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='white' font-family='Georgia'%3E§%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#/">
+      <span class="brand-mark">§</span>
+      <span class="brand-text">diffgesetz <small>Was ändert sich im Gesetz?</small></span>
+    </a>
+    <div class="topbar-controls">
+      <div class="segmented" role="group" aria-label="Darstellung der Änderungen">
+        <button data-view="split" class="active" title="Alter Text links, neuer Text rechts">Nebeneinander</button>
+        <button data-view="inline" title="Ein einziger Text, Änderungen farbig markiert">Im Text markiert</button>
+      </div>
+      <label class="toggle" title="Abschnitte ohne Änderung einklappen"><input type="checkbox" id="only-changes" checked> Unverändertes ausblenden</label>
+      <button class="icon-btn" id="theme-toggle" title="Hell / Dunkel umschalten" aria-label="Hell / Dunkel umschalten"></button>
+      <button class="help-btn" data-help="" aria-label="Hilfe und Erklärungen">? Hilfe</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" aria-label="Veröffentlichungen">
+      <div class="sidebar-search">
+        <input type="search" id="search" placeholder="Thema suchen, z. B. Steuer, Rente …" autocomplete="off" aria-label="Veröffentlichungen durchsuchen">
+        <div class="filter-row">
+          <select id="type-filter" aria-label="Art der Veröffentlichung">
+            <option value="">Alle Arten</option>
+          </select>
+          <label class="toggle" title="Nur Veröffentlichungen, die bestehende Gesetze ändern"><input type="checkbox" id="only-amending"> nur Gesetzesänderungen</label>
+        </div>
+      </div>
+      <div id="list-count" class="list-count" aria-live="polite"></div>
+      <ol id="pub-list" class="pub-list"></ol>
+      <div id="data-date" class="data-date"></div>
+    </aside>
+
+    <main id="main" class="main">
+      <section class="welcome">
+        <h1>Was ändert sich im Gesetz?</h1>
+        <p class="lead">
+          Neue Gesetze und Änderungen werden im <strong>Bundesgesetzblatt</strong> veröffentlicht – dem amtlichen
+          „Mitteilungsblatt“ für Gesetze. Dort steht aber meist nicht der neue Text, sondern nur eine Anweisung wie:
+        </p>
+        <blockquote class="example">„In § 4 Absatz 1 wird die Angabe „zwei Monate“ durch die Angabe „fünf Wochen“ ersetzt.“</blockquote>
+        <p>
+          Um zu verstehen, was sich wirklich ändert, müsste man das Gesetz danebenlegen und die Änderung von Hand einarbeiten.
+          <strong>diffgesetz erledigt das automatisch</strong> und zeigt beide Fassungen nebeneinander:
+        </p>
+        <div class="example-diff" aria-hidden="true">
+          <div><span class="label">− Vorher</span><span>… können <del>zwei Monate</del> vor Inkrafttreten bezogen werden.</span></div>
+          <div><span class="label">+ Nachher</span><span>… können <ins>fünf Wochen</ins> vor Inkrafttreten bezogen werden.</span></div>
+        </div>
+        <ol class="steps">
+          <li><strong>Veröffentlichung auswählen</strong> – links in der Liste, die neuesten stehen oben. Mit der Suche finden Sie Themen wie „Steuer“ oder „Rente“.</li>
+          <li><strong>Vorher / Nachher lesen</strong> – <del>Durchgestrichenes</del> fällt weg, <ins>Grünes</ins> kommt neu hinzu.</li>
+          <li><strong>Nachvollziehen</strong> – „Wie ermittelt?“ erklärt bei jeder Vorschrift, woher die Texte stammen.</li>
+        </ol>
+        <p><button class="linklike" data-help="">Mehr erfahren: Wie funktioniert das und was bedeuten die Fachbegriffe?</button></p>
+        <p class="hint">Ohne Gewähr – rechtsverbindlich ist allein das amtliche Bundesgesetzblatt.</p>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="dialog" aria-labelledby="dialog-title">
+    <div class="dialog-head">
+      <h2 id="dialog-title"></h2>
+      <button id="dialog-close" aria-label="Schließen">✕</button>
+    </div>
+    <div id="dialog-body" class="dialog-body"></div>
+  </dialog>
+
+  <template id="tpl-help">
+    <section id="help-how">
+      <h3>Wie entsteht die Gegenüberstellung?</h3>
+      <ol class="pipeline">
+        <li><strong>Veröffentlichung holen.</strong> Das amtliche PDF wird von recht.bund.de geladen, der offiziellen Plattform des Bundesgesetzblatts.</li>
+        <li><strong>Anweisungen erkennen.</strong> Der Text wird in seine Artikel zerlegt. Jede Änderungsanweisung („… wird gestrichen“, „Nach Absatz 3 wird folgender Absatz eingefügt …“) wird erkannt: <em>was</em> geändert wird, <em>wo</em> und <em>wie</em>.</li>
+        <li><strong>Betroffenes Gesetz finden.</strong> Der aktuelle Text des geänderten Gesetzes wird aus dem Rechtsinformationsportal des Bundes oder von gesetze-im-internet.de geladen.</li>
+        <li><strong>Vorher und Nachher bestimmen.</strong> Diese Datenbanken werden meist innerhalb weniger Tage aktualisiert. diffgesetz prüft daher für jede Vorschrift, ob der aktuelle Text die Änderung schon enthält:
+          <ul>
+            <li><span class="badge applied">neuer Text berechnet</span> Noch nicht enthalten: Der aktuelle Text ist „Vorher“, der neue Text wird durch Anwenden der Anweisungen berechnet.</li>
+            <li><span class="badge consolidated">alter Text rekonstruiert</span> Schon enthalten: Der aktuelle Text ist „Nachher“, der alte Text wird zurückgerechnet – notfalls mithilfe einer archivierten älteren Fassung (Internet Archive).</li>
+          </ul>
+        </li>
+        <li><strong>Vergleichen.</strong> Beide Fassungen werden Abschnitt für Abschnitt und Wort für Wort verglichen und farbig markiert.</li>
+      </ol>
+    </section>
+    <section id="help-status">
+      <h3>Was bedeuten die Markierungen?</h3>
+      <dl class="legend">
+        <div><dt><span class="badge applied">neuer Text berechnet</span></dt><dd>Das Gesetz im Internet ist noch nicht aktualisiert; diffgesetz zeigt, wie es nach der Änderung lauten wird.</dd></div>
+        <div><dt><span class="badge consolidated">alter Text rekonstruiert</span></dt><dd>Das Gesetz im Internet ist schon aktualisiert; diffgesetz zeigt zusätzlich, wie es vorher lautete.</dd></div>
+        <div><dt><span class="badge failed">nicht anwendbar</span></dt><dd>Die Anweisung passte nicht zum Gesetzestext (z. B. ungewöhnliche Formulierung). Sie ist nur im Wortlaut zu sehen.</dd></div>
+        <div><dt><span class="badge unsupported">nicht dargestellt</span></dt><dd>Änderungen an Inhaltsverzeichnissen, Anlagen und Tabellen werden nicht gegenübergestellt.</dd></div>
+        <div><dt><del>durchgestrichen</del></dt><dd>Text, der wegfällt.</dd></div>
+        <div><dt><ins>grün hinterlegt</ins></dt><dd>Text, der neu hinzukommt.</dd></div>
+      </dl>
+    </section>
+    <section id="help-terms">
+      <h3>Kleines Wörterbuch</h3>
+      <dl class="glossary">
+        <dt>Bundesgesetzblatt (BGBl.)</dt><dd>Das amtliche Veröffentlichungsblatt des Bundes. Erst mit der Veröffentlichung dort („Verkündung“) wird ein Gesetz wirksam. diffgesetz zeigt Teil I – die Gesetze und Verordnungen für Deutschland.</dd>
+        <dt>Gesetz / Verordnung</dt><dd>Ein Gesetz beschließt der Bundestag. Eine Verordnung erlässt die Regierung oder ein Ministerium auf Grundlage eines Gesetzes – sie regelt meist Details.</dd>
+        <dt>Änderungsgesetz</dt><dd>Ein Gesetz, das bestehende Gesetze ändert. Es enthält nicht den neuen Gesamttext, sondern nur die Anweisungen, was zu ändern ist.</dd>
+        <dt>Artikel</dt><dd>Ein Änderungsgesetz ist in Artikel gegliedert; oft ändert jeder Artikel ein anderes Gesetz. Der letzte Artikel regelt meist, ab wann alles gilt („Inkrafttreten“).</dd>
+        <dt>§ (Paragraf), Absatz, Satz, Nummer</dt><dd>Die Gliederung eines Gesetzes: Ein Paragraf hat Absätze – geschrieben (1), (2) –, Absätze bestehen aus Sätzen und enthalten oft Aufzählungen mit Nummern (1., 2.) und Buchstaben (a), b)).</dd>
+        <dt>Fassung</dt><dd>Der Wortlaut eines Gesetzes zu einem bestimmten Zeitpunkt. „Bisherige Fassung“ = vor der Änderung, „neue Fassung“ = danach.</dd>
+        <dt>Inkrafttreten</dt><dd>Der Tag, ab dem eine Regelung gilt. Er kann nach der Veröffentlichung liegen.</dd>
+        <dt>„(weggefallen)“</dt><dd>Platzhalter für eine aufgehobene Vorschrift, damit sich die Nummerierung der übrigen nicht verschiebt.</dd>
+        <dt>Synopse</dt><dd>Fachwort für die Gegenüberstellung von alter und neuer Fassung – das, was diffgesetz erzeugt.</dd>
+      </dl>
+    </section>
+    <section id="help-sources">
+      <h3>Quellen und Grenzen</h3>
+      <p>Daten stammen von recht.bund.de (Bundesgesetzblatt), dem Rechtsinformationsportal des Bundes (testphase.rechtsinformationen.bund.de), gesetze-im-internet.de und dem Internet Archive (archive.org). Alles wird automatisch ausgewertet und kann Fehler enthalten. Rechtsverbindlich ist allein das amtliche Bundesgesetzblatt.</p>
+    </section>
+  </template>
+
+  <template id="tpl-loading">
+    <div class="loading">
+      <div class="spinner" aria-hidden="true"></div>
+      <p>Die Veröffentlichung wird ausgewertet …</p>
+      <p class="hint">diffgesetz liest das amtliche PDF und lädt die betroffenen Gesetze. Beim ersten Aufruf kann das bis zu einer Minute dauern – danach geht es sofort.</p>
+    </div>
+  </template>
+
+  <script src="static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+[project]
+name = "diffgesetz"
+version = "0.1.0"
+description = "Synopse (Diff-Ansicht) für Änderungen im Bundesgesetzblatt"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.162.0",
+    "httpx>=0.28.1",
+    "lxml>=6.1.3",
+    "pymupdf>=2.0",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[project.scripts]
+diffgesetz = "diffgesetz.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["diffgesetz"]
