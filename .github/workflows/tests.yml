@@ -1,0 +1,121 @@
+# Runs all tests on every push and pull request: the Python tests and the browser
+# tests of the frontend (see tests/frontend/) in all three browser engines –
+# Chromium (Chrome, Edge, Android), Firefox and WebKit (Safari on iPhone, iPad, Mac).
+# The screenshots of every page, screen size and theme are kept as an artifact.
+# On main, the coverage (measured in the Chromium run) and the ruff result are drawn as
+# badges and pushed to the branch "badges", which the README shows.
+
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install
+        run: |
+          uv sync --frozen
+          uv run playwright install --with-deps ${{ matrix.browser }}
+
+      # Coverage once is enough: the Python code runs the same in every browser job.
+      # The browser tests serve static files, so app.js is not part of the number.
+      - name: Test
+        run: |
+          if [ "${{ matrix.browser }}" = chromium ]; then cov="--cov --cov-report=json:coverage.json"; fi
+          uv run pytest --browser ${{ matrix.browser }} $cov
+
+      # also after failed tests: pytest-cov still writes the report, and the badge should show it
+      - name: Keep coverage report
+        if: always() && matrix.browser == 'chromium'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-screenshots-${{ matrix.browser }}
+          path: test-results/
+          retention-days: 14
+
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      findings: ${{ steps.ruff.outputs.findings }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Ruff
+        id: ruff
+        run: |
+          uv sync --frozen
+          n=$(uv run ruff check --output-format json bundesdiff tests | python3 -c "import json, sys; print(len(json.load(sys.stdin)))")
+          echo "findings=$n" >> "$GITHUB_OUTPUT"
+          uv run ruff check bundesdiff tests
+
+  badges:
+    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test, lint]
+    runs-on: ubuntu-latest
+    # two pushes in quick succession would otherwise both push to "badges" and one would be rejected
+    concurrency:
+      group: badges
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # missing when the Chromium job broke off before pytest – then the coverage badge keeps its last value
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: coverage
+
+      - name: Draw badges and push them to the branch "badges"
+        run: |
+          mkdir out
+          if [ -f coverage.json ]; then python3 .github/scripts/badge.py coverage coverage.json > out/coverage.svg; fi
+          if [ -n "${{ needs.lint.outputs.findings }}" ]; then python3 .github/scripts/badge.py ruff "${{ needs.lint.outputs.findings }}" > out/ruff.svg; fi
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin badges > /dev/null; then
+            git fetch --depth=1 origin badges
+            git worktree add store FETCH_HEAD
+            git -C store switch -c badges
+          else
+            git worktree add --orphan -b badges store
+          fi
+          cp out/*.svg store/ 2>/dev/null || { echo "No badge data."; exit 0; }
+          cd store
+          git add -A
+          if git diff --cached --quiet; then echo "Badges unchanged."; exit 0; fi
+          git commit -q -m "Badges für ${GITHUB_SHA::7}"
+          git push origin badges

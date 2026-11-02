@@ -361,7 +361,7 @@ def _xml_parts(el: ET.Element, node: Node) -> None:
             if text:
                 node.parts.append(text)
         elif tag in ("paragraph", "item", "point", "listItem"):
-            num = child.find(f"./{{*}}num")
+            num = child.find("./{*}num")
             label = normalize("".join(num.itertext())) if num is not None else ""
             kind = "abs" if tag == "paragraph" else "item"
             sub = Node(kind, label)
@@ -370,7 +370,7 @@ def _xml_parts(el: ET.Element, node: Node) -> None:
                 sub.kind = lk[0]
             elif kind == "item":
                 sub.kind = "nr"
-            heading = child.find(f"./{{*}}heading")
+            heading = child.find("./{*}heading")
             if heading is not None:
                 sub.heading = normalize("".join(heading.itertext()))
             _xml_parts(child, sub)

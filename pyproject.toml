@@ -13,7 +13,11 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "axe-playwright-python>=0.1.8",
     "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "pytest-playwright>=0.10.0",
+    "ruff>=0.17.3",
 ]
 
 [project.scripts]
@@ -25,3 +29,19 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["bundesdiff"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["spec(*ids): the spec requirements (specs/*.md) this test proves"]
+# a failing browser test keeps a screenshot and a trace (open with `uv run playwright show-trace`)
+addopts = "--screenshot only-on-failure --tracing retain-on-failure --output test-results/failures"
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+# Only rules that find real mistakes (unused names, undefined names, syntax errors) – not style.
+select = ["E4", "E7", "E9", "F"]
+
+[tool.coverage.run]
+source = ["bundesdiff"]
