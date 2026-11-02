@@ -97,7 +97,7 @@
 html { height: 100%; }
 body { min-height: 100%; } /* not height: the sticky bars must stay up to the end of the page */
 body {
-  hyphens: auto; /* German compounds would otherwise be torn apart without a hyphen on phones */
+  -webkit-hyphens: auto; hyphens: auto; /* German compounds would otherwise be torn apart without a hyphen on phones */
   margin: 0;
   background: var(--desk);
   color: var(--ink);
@@ -178,7 +178,7 @@ a:hover, .linklike:hover { color: var(--accent); text-decoration-color: var(--ac
   border: 0; background: transparent; padding: 4px 12px; cursor: pointer;
   font-size: 17px; font-variant: small-caps; letter-spacing: .04em; color: var(--ink-soft);
 }
-button, label, select { hyphens: manual; overflow-wrap: normal; }
+button, label, select { -webkit-hyphens: manual; hyphens: manual; overflow-wrap: normal; }
 .segmented button + button { border-left: 1px solid var(--rule-strong); }
 .segmented button:hover { background: var(--paper-2); }
 .segmented button.active { background: var(--ink); color: var(--paper); }
@@ -198,7 +198,7 @@ button, label, select { hyphens: manual; overflow-wrap: normal; }
 }
 .welcome h1, .pub-header h1 {
   font-weight: normal; font-size: 38px; line-height: 1.2; margin: 4px 0 14px; letter-spacing: -.005em; text-align: center;
-  hyphens: auto;
+  -webkit-hyphens: auto; hyphens: auto;
 }
 /* section ornament under the title: ——— § ——— */
 .welcome h1::after, .pub-header h1::after {
@@ -212,7 +212,7 @@ button, label, select { hyphens: manual; overflow-wrap: normal; }
 .welcome .lead::first-letter {
   float: left; font-size: 3.4em; line-height: .85; padding: 4px 8px 0 0; color: var(--accent);
 }
-.welcome p, .plain-summary { text-align: justify; hyphens: auto; }
+.welcome p, .plain-summary { text-align: justify; -webkit-hyphens: auto; hyphens: auto; }
 .example { margin: 18px 28px; padding: 0; font-style: italic; font-size: 20px; color: var(--ink-soft); text-align: center; }
 .example-diff { margin: 18px 0 22px; border: 1px solid var(--rule-strong); border-radius: 3px; overflow: hidden; font-size: 19px; }
 .example-diff > div { display: grid; grid-template-columns: 96px 1fr; }
@@ -305,7 +305,7 @@ button, label, select { hyphens: manual; overflow-wrap: normal; }
 .article details.other summary::-webkit-details-marker { display: none; }
 .article details.other summary h2 { display: inline; font-size: 20px; }
 .article details.other summary .muted { display: block; font-size: 14px; font-style: italic; }
-.article details.other .plain { padding: 0 56px 26px; white-space: pre-wrap; text-align: justify; hyphens: auto; }
+.article details.other .plain { padding: 0 56px 26px; white-space: pre-wrap; text-align: justify; -webkit-hyphens: auto; hyphens: auto; }
 
 .tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 28px; border-bottom: 1px solid var(--rule); }
 .tabs button {
@@ -346,7 +346,7 @@ button, label, select { hyphens: manual; overflow-wrap: normal; }
   text-align: left; padding: 10px 14px 6px; border-bottom: 1px solid var(--rule);
 }
 .diff td { vertical-align: top; padding: 5px 14px; }
-.diff td.text { text-align: left; hyphens: auto; overflow-wrap: break-word; }
+.diff td.text { text-align: left; -webkit-hyphens: auto; hyphens: auto; overflow-wrap: break-word; }
 .diff td.g {
   padding: 5px 0; text-align: center; font: 13px/1.95 var(--mono); color: var(--muted); user-select: none;
   border-right: 1px solid var(--rule);
@@ -421,7 +421,7 @@ del.sample::before, del.sample::after, ins.sample::before, ins.sample::after { c
 }
 .instructions li:last-child { border-bottom: 0; }
 .instructions .marker { color: var(--accent); font-size: 17px; padding-top: 1px; text-align: right; }
-.instructions .raw { font-size: 19px; text-align: justify; hyphens: auto; }
+.instructions .raw { font-size: 19px; text-align: justify; -webkit-hyphens: auto; hyphens: auto; }
 .instructions .raw q { quotes: "„" "“"; font-style: italic; }
 .instructions .where { font-size: 16px; color: var(--muted); font-style: italic; margin-top: 3px; }
 .instructions .msg { font-size: 16px; color: var(--del-ink); margin-top: 2px; }
@@ -469,7 +469,7 @@ dialog[open] { animation: window-open .2s ease-out; }
 .close-x svg { display: block; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
 .dialog-body { padding: 4px 28px 26px; overflow-y: auto; max-height: calc(100vh - 150px); }
 .dialog-body h3 { font-weight: normal; font-size: 20px; font-variant: small-caps; letter-spacing: .08em; color: var(--accent); margin: 24px 0 8px; }
-.dialog-body p, .dialog-body li, .dialog-body dd { text-align: justify; hyphens: auto; }
+.dialog-body p, .dialog-body li, .dialog-body dd { text-align: justify; -webkit-hyphens: auto; hyphens: auto; }
 .pipeline { padding-left: 22px; display: grid; gap: 10px; }
 .pipeline li::marker { color: var(--accent); }
 .pipeline ul { padding-left: 0; list-style: none; display: grid; gap: 6px; margin-top: 6px; }
@@ -644,7 +644,7 @@ dialog[open] { animation: window-open .2s ease-out; }
 .so-meta, .so-detail { font-size: 15px; color: var(--muted); }
 .so-detail { font-style: italic; }
 .search-results mark {
-  background: none; color: inherit; font-weight: 700; hyphens: manual; /* a match is not split across lines */
+  background: none; color: inherit; font-weight: 700; -webkit-hyphens: manual; hyphens: manual; /* a match is not split across lines */
   text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 3px;
 }
 .search-foot { margin: 0; padding: 4px 20px 12px; text-align: right; font-size: 15px; }
@@ -676,9 +676,9 @@ dialog[open] { animation: window-open .2s ease-out; }
 }
 .tl-months { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 16px; font-size: 16px; }
 .tl-months a { font-variant: small-caps; letter-spacing: .04em; padding: 2px 0; }
-.tl-empty .keep { hyphens: manual; } /* „Sonstiges“, not „Sonsti-ges“; a longer name may still break between words */
+.tl-empty .keep { -webkit-hyphens: manual; hyphens: manual; } /* „Sonstiges“, not „Sonsti-ges“; a longer name may still break between words */
 .list-count, .tl-note, .tl-empty { font-size: 16px; font-style: italic; color: var(--muted); text-align: center; margin: 14px 0 0; }
-.tl-note { text-align: justify; hyphens: auto; }
+.tl-note { text-align: justify; -webkit-hyphens: auto; hyphens: auto; }
 @media (max-width: 600px) { .tl-note { text-align: left; } } /* justified italics leave holes on phones */
 .timeline { list-style: none; margin: 0; padding: 0; }
 .tl-month > h2 {
@@ -687,7 +687,7 @@ dialog[open] { animation: window-open .2s ease-out; }
 }
 .tl-month > h2:focus { outline: none; }
 .tl-month > h2 { scroll-margin-top: calc(var(--topbar-h) + 8px); } /* a month link: clear of the navbar */
-.upcoming .tl-month > h2 { hyphens: manual; text-wrap: balance; } /* "Kürzlich in Kraft getreten": no "ge-/treten" */
+.upcoming .tl-month > h2 { -webkit-hyphens: manual; hyphens: manual; text-wrap: balance; } /* "Kürzlich in Kraft getreten": no "ge-/treten" */
 .tl-days, .tl-entries { list-style: none; margin: 0; padding: 0; }
 /* date in the margin, a thin rule, the entries to its right */
 .tl-day { position: relative; display: grid; grid-template-columns: 210px minmax(0, 1fr); column-gap: 30px; }
@@ -720,7 +720,7 @@ dialog[open] { animation: window-open .2s ease-out; }
 .tl-what { font-size: 16px; color: var(--ink-soft); }
 .tl-source { margin: 0 10px 8px; font-size: 15px; color: var(--muted); }
 .tl-source summary { cursor: pointer; font-variant: small-caps; letter-spacing: .04em; width: fit-content; padding: 4px 0; }
-.tl-source p, .tl-sentence { margin: 4px 0 0; font-style: italic; text-align: justify; hyphens: auto; }
+.tl-source p, .tl-sentence { margin: 4px 0 0; font-style: italic; text-align: justify; -webkit-hyphens: auto; hyphens: auto; }
 .tl-sentence { margin: 0 10px 10px; font-size: 15px; color: var(--muted); }
 .timeline-page .data-date { margin: 26px 0 0; text-align: center; font-size: 14px; font-style: italic; color: var(--muted); }
 .timeline-page .data-date:empty { display: none; }

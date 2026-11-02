@@ -510,6 +510,8 @@ def test_menu_opens_above_its_button_and_leads_everywhere(app, page):
     button.click()
     expect(menu(page)).to_be_visible()
     expect(button).to_have_attribute("aria-expanded", "true")
+    # measured once it has opened: while it grows out of its button it still reaches over it
+    page.wait_for_function("document.getAnimations().every(a => a.playState !== 'running')")
     assert menu(page).bounding_box()["y"] + menu(page).bounding_box()["height"] <= button.bounding_box()["y"] + 1
     expect(menu(page).get_by_role("link", name="bundesdiff – Startseite")).to_be_visible()
     current = menu(page).get_by_role("link", name="Veröffentlichungen")

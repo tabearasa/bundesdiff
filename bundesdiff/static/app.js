@@ -400,7 +400,7 @@ const REDUCED = matchMedia("(prefers-reduced-motion: reduce)");
 // pos: where every entry is on the page (from its top). The lens only scales them, around their
 // left middle, so that does not change while scrolling: measured once, not in every frame.
 // hold: the entry reached with the keyboard, the card while the page glides to it.
-const lens = { entries: [], pos: [], focus: null, frame: 0, hold: null, width: innerWidth };
+const lens = { entries: [], pos: [], focus: null, hold: null, width: innerWidth };
 const watchTimeline = new ResizeObserver(() => { measureLens(); drawLens(); });
 
 function lensActive() {
@@ -443,7 +443,6 @@ function distanceFromMiddle(i) {
 /** The card is drawn at full size; every other entry shrinks smoothly with its distance from
  * the middle of the screen, to 88 % – in every frame while scrolling, so nothing pops up later. */
 function drawLens() {
-  lens.frame = 0;
   const reach = Math.max(120, innerHeight * 0.22);
   lens.entries.forEach((e, i) => {
     let scale = ""; // written only when it changes: far away every entry stays at 88 %
@@ -502,12 +501,10 @@ function entryAtMiddle() {
 
 // in every frame while the reader scrolls: the entry in the middle is the card. The page never
 // moves by itself here, so the lens can never fight the reader's own scrolling (PTL-2).
+// Drawn right in the scroll event: browsers send it at most once a frame, just before drawing.
+// A requestAnimationFrame from here would run a frame later in Safari: the lens would lag behind.
 document.addEventListener("scroll", () => {
-  if (!lensActive() || lens.frame) return;
-  lens.frame = requestAnimationFrame(() => {
-    lens.frame = 0;
-    if (lensActive()) setLensFocus(entryAtMiddle()); // the timeline may be gone: a publication opened
-  });
+  if (lensActive()) setLensFocus(entryAtMiddle()); // the timeline may be gone: a publication opened
 }, { passive: true });
 // the reader scrolls on: the keyboard's card is not held any longer
 for (const type of ["wheel", "touchstart", "pointerdown"]) document.addEventListener(type, () => { lens.hold = null; }, { passive: true });

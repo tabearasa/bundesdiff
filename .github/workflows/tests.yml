@@ -34,6 +34,9 @@ jobs:
         run: |
           uv sync --frozen
           uv run playwright install --with-deps ${{ matrix.browser }}
+          # WebKit on Linux hyphenates with the system's dictionaries, and the runner has only the
+          # English ones. Safari on iPhone and Mac has German built in, as Chromium and Firefox do.
+          if [ "${{ matrix.browser }}" = webkit ]; then sudo apt-get install -y --no-install-recommends hyphen-de; fi
 
       # Coverage once is enough: the Python code runs the same in every browser job.
       # The browser tests serve static files, so app.js is not part of the number.
