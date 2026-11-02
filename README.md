@@ -1,8 +1,8 @@
 # bundesdiff
 
-[![Tests](https://github.com/tabearasa/REPO/actions/workflows/tests.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/tests.yml)
-[![Coverage](https://raw.githubusercontent.com/tabearasa/bundesdiff/badges/coverage.svg)](https://github.com/OWNER/REPO/actions/workflows/tests.yml)
-[![Ruff](https://raw.githubusercontent.com/tabearasa/bundesdiff/badges/ruff.svg)](https://github.com/OWNER/REPO/actions/workflows/tests.yml)
+[![Tests](../../actions/workflows/tests.yml/badge.svg)](../../actions/workflows/tests.yml)
+[![Coverage](../../raw/badges/coverage.svg)](../../actions/workflows/tests.yml)
+[![Ruff](../../raw/badges/ruff.svg)](../../actions/workflows/tests.yml)
 [![License: MIT](.github/badges/license.svg)](LICENSE)
 
 **Goal:** everyone, not only lawyers, can see what a new federal law changes.
