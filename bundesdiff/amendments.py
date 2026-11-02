@@ -64,7 +64,9 @@ def split_document(lines: list[Line]) -> Document:
             while i < len(lines) and lines[i].is_heading:
                 heading.append(lines[i].text)
                 i += 1
-            current = Article(m.group(1), normalize(" ".join(heading)).rstrip("*").strip(), [])
+            heading = normalize(" ".join(heading)).rstrip("*").strip()
+            # a footnote mark is set as a superscript right after the last word: "…Wettbewerb5"
+            current = Article(m.group(1), re.sub(r"(?<=[a-zäöüß])\d+$", "", heading), [])
             articles.append(current)
             continue
         if current is None:

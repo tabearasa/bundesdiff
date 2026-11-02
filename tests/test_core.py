@@ -131,3 +131,21 @@ def test_rows_pair_units_with_the_same_label():
     rows = diff_units(old, new)
     pairs = [(r["left"][0]["s"][:2], r["right"][0]["s"][:2]) for r in rows if r["op"] == "change"]
     assert ("b)", "b)") in pairs
+
+
+def test_footnote_marks_are_not_part_of_article_headings():
+    """BGBl. 2026 I Nr. 322: the footnote "5" is set as a superscript right after the heading and
+    ended up in the law's name ("Gesetzes gegen den unlauteren Wettbewerb5"), so the law was not found."""
+    from bundesdiff.amendments import split_document
+    from bundesdiff.pdftext import Line
+
+    def ln(text, size=9.0):
+        return Line(text, 50, 1, size, False)
+
+    doc = split_document([ln("Artikel 1", 11), ln("Änderung des Designgesetzes1", 11), ln("Das Designgesetz …"),
+                          ln("Artikel 6", 11), ln("Weitere Änderung des Gesetzes", 11),
+                          ln("gegen den unlauteren Wettbewerb5", 11), ln("Das Gesetz …"),
+                          ln("Artikel 7", 11), ln("Änderung der Verordnung (EU) 2018/1240", 11), ln("…")])
+    assert [a.heading for a in doc.articles] == [
+        "Änderung des Designgesetzes", "Weitere Änderung des Gesetzes gegen den unlauteren Wettbewerb",
+        "Änderung der Verordnung (EU) 2018/1240"]
