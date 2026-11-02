@@ -17,6 +17,7 @@ import shutil
 import time
 from pathlib import Path
 
+from . import listing as list_entry
 from . import sources, store
 from .analysis import analyze
 
@@ -70,20 +71,21 @@ def export(site: Path, days: int = 365, max_new: int = 50, retry_hours: float = 
             result = store.load_result(p.id)
             if result is not None:
                 _write_json(site / "data" / teil / str(p.year) / f"{p.number}.json", result)
-            listing.append({
-                "id": p.id, "teil": p.teil, "year": p.year, "number": p.number, "title": p.title,
-                "date": p.date, "typ": p.typ, "initiant": p.initiant, "fundstelle": p.fundstelle,
-                "sachgebiet": p.sachgebiet, "analyzed": bool(result and not result.get("error")),
-            })
+            listing.append(list_entry.entry(p, result))
         _write_json(site / "data" / f"publications-{teil}.json", listing)
 
     _write_json(site / "data" / "meta.json", {"generated": dt.datetime.now(dt.UTC).isoformat(timespec="minutes"),
                                               "since": cutoff})
-    shutil.copytree(STATIC, site / "static")
+    build_frontend(site)
+    return totals
+
+
+def build_frontend(site: Path) -> None:
+    """Copy the frontend into ``site`` and switch it to the precomputed data/ files."""
+    shutil.copytree(STATIC, site / "static", dirs_exist_ok=True)
     index = (STATIC / "index.html").read_text()
     index = index.replace('<script src="static/app.js">',
                           '<script>window.BUNDESDIFF_STATIC = true;</script>\n  <script src="static/app.js">')
     (site / "index.html").write_text(index)
     (site / "static" / "index.html").unlink()
     (site / ".nojekyll").write_text("")
-    return totals

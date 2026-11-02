@@ -14,7 +14,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import sources, store
+from . import listing, sources, store
 from .analysis import analyze
 
 log = logging.getLogger("bundesdiff")
@@ -86,14 +86,7 @@ def publications(teil: str = "1") -> list[dict]:
         pubs = sources.list_publications(teil)
     except Exception as e:  # noqa: BLE001
         raise HTTPException(502, f"RSS-Feed nicht erreichbar: {e}") from e
-    return [
-        {
-            "id": p.id, "teil": p.teil, "year": p.year, "number": p.number, "title": p.title, "date": p.date,
-            "typ": p.typ, "initiant": p.initiant, "fundstelle": p.fundstelle, "sachgebiet": p.sachgebiet,
-            "analyzed": store.result_path(p.id).exists(),
-        }
-        for p in pubs
-    ]
+    return [listing.entry(p, store.load_result(p.id)) for p in pubs]
 
 
 @app.get("/api/publications/{teil}/{year}/{number}")
