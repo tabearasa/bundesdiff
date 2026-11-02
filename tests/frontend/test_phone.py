@@ -217,7 +217,10 @@ def test_no_entry_jumps_in_size_when_the_card_changes(app, page, viewport):
     worst, changes = 0, 0
     for _ in range(100):  # 6 px a frame: a slow, steady scroll
         before = page.evaluate(FRAMES_JS, 0)[0]
-        page.evaluate("new Promise(r => { scrollBy(0, 6); requestAnimationFrame(() => requestAnimationFrame(r)); })")
+        # until the page has handled the scroll: WebKit sends the event of a script scroll some frames
+        # later, and a fixed wait would count several steps as one
+        page.evaluate("""new Promise(r => { addEventListener('scroll', () => requestAnimationFrame(
+            () => requestAnimationFrame(r)), { once: true }); scrollBy(0, 6); })""")
         after = page.evaluate(FRAMES_JS, 0)[0]
         changes += before["card"] != after["card"]
         worst = max(worst, *(abs(a - b) for a, b in zip(before["scales"], after["scales"])))
