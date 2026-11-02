@@ -1,4 +1,4 @@
-"""Command line: ``diffgesetz [serve|export|prune]``."""
+"""Command line: ``bundesdiff [serve|export|prune]``."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(prog="diffgesetz", description="Synopse zum Bundesgesetzblatt")
+    parser = argparse.ArgumentParser(prog="bundesdiff", description="Synopse zum Bundesgesetzblatt")
     sub = parser.add_subparsers(dest="cmd")
 
     p = sub.add_parser("serve", help="Web-App mit Live-Auswertung starten (Standard)")

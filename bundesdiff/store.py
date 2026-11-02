@@ -1,7 +1,7 @@
 """Persistent data: analysis results and the law versions seen so far.
 
 Kept separate from the HTTP cache so it can be committed (e.g. to a data
-branch) and archived. Location: ``DIFFGESETZ_DATA`` (default: the cache dir).
+branch) and archived. Location: ``BUNDESDIFF_DATA`` (default: the cache dir).
 """
 
 from __future__ import annotations
@@ -15,8 +15,8 @@ import re
 import tarfile
 from pathlib import Path
 
-CACHE_DIR = Path(os.environ.get("DIFFGESETZ_CACHE", Path.home() / ".cache" / "diffgesetz"))
-DATA_DIR = Path(os.environ.get("DIFFGESETZ_DATA", CACHE_DIR))
+CACHE_DIR = Path(os.environ.get("BUNDESDIFF_CACHE", Path.home() / ".cache" / "bundesdiff"))
+DATA_DIR = Path(os.environ.get("BUNDESDIFF_DATA", CACHE_DIR))
 
 _VERSION_RE = re.compile(r"(\d{4}-\d{2}-\d{2})\.xml(?:\.gz)?$")
 

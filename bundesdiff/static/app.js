@@ -7,11 +7,11 @@ const CONTEXT = 1; // unchanged lines shown around changes when folding
 const STATUS = {
   applied: {
     label: "neuer Text berechnet",
-    title: "Das Gesetz im Internet ist noch nicht aktualisiert. Den neuen Text hat diffgesetz aus der Änderung selbst erzeugt.",
+    title: "Das Gesetz im Internet ist noch nicht aktualisiert. Den neuen Text hat bundesdiff aus der Änderung selbst erzeugt.",
   },
   consolidated: {
     label: "alter Text rekonstruiert",
-    title: "Das Gesetz im Internet enthält die Änderung bereits. Den bisherigen Text hat diffgesetz zurückgerechnet.",
+    title: "Das Gesetz im Internet enthält die Änderung bereits. Den bisherigen Text hat bundesdiff zurückgerechnet.",
   },
   failed: {
     label: "nicht anwendbar",
@@ -30,7 +30,7 @@ const TYPE_HINT = {
 };
 
 // Static build (GitHub Pages): precomputed JSON files instead of the live API
-const STATIC = Boolean(window.DIFFGESETZ_STATIC);
+const STATIC = Boolean(window.BUNDESDIFF_STATIC);
 const api = {
   list: (teil) => STATIC ? `data/publications-${teil}.json` : `/api/publications?teil=${teil}`,
   publication: (teil, year, number, refresh) => STATIC
@@ -51,10 +51,10 @@ const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
 function localGet(key) {
-  try { return localStorage.getItem("diffgesetz." + key); } catch { return null; }
+  try { return localStorage.getItem("bundesdiff." + key); } catch { return null; }
 }
 function localSet(key, value) {
-  try { localStorage.setItem("diffgesetz." + key, value); } catch { /* ignore */ }
+  try { localStorage.setItem("bundesdiff." + key, value); } catch { /* ignore */ }
 }
 
 function esc(text) {
@@ -312,7 +312,7 @@ function renderAmendment(a, i) {
   if (a.pars && a.pars.length) a.pars.forEach((p) => syn.appendChild(renderPar(p, a)));
   else syn.appendChild(el(`<p class="no-pars">Für dieses Gesetz konnte keine Gegenüberstellung erzeugt werden. Unter „Wortlaut im Gesetzblatt“ sehen Sie die Änderungen so, wie sie veröffentlicht wurden.</p>`));
   const cmd = $('[data-body="befehle"]', card);
-  cmd.appendChild(el(`<p class="tab-intro">Gesetzesänderungen werden als Anweisungen formuliert („… wird durch … ersetzt“). Hier steht jede Anweisung im Originalwortlaut – und ob diffgesetz sie anwenden konnte.</p>`));
+  cmd.appendChild(el(`<p class="tab-intro">Gesetzesänderungen werden als Anweisungen formuliert („… wird durch … ersetzt“). Hier steht jede Anweisung im Originalwortlaut – und ob bundesdiff sie anwenden konnte.</p>`));
   cmd.appendChild(renderInstructions(a.instructions || []));
   return card;
 }
@@ -483,7 +483,7 @@ function showHow(p, article) {
     how = `<p>Der aktuelle Text von <strong>${esc(p.title)}</strong> auf ${esc(src)} (Stand ${esc(formatDate(law.version))})
       <strong>enthält diese Änderung noch nicht</strong> – oft, weil sie erst später in Kraft tritt oder die Datenbank noch nicht aktualisiert wurde.
       Er bildet deshalb die linke Spalte „Vorher“.</p>
-      <p>Die rechte Spalte „Nachher“ hat diffgesetz <strong>selbst berechnet</strong>, indem es die Anweisungen aus dem Gesetzblatt auf diesen Text angewendet hat.</p>`;
+      <p>Die rechte Spalte „Nachher“ hat bundesdiff <strong>selbst berechnet</strong>, indem es die Anweisungen aus dem Gesetzblatt auf diesen Text angewendet hat.</p>`;
   }
   const list = related.length
     ? `<h3>Angewendete Anweisungen</h3><ol class="how-list">${related.map((i) =>
@@ -494,7 +494,7 @@ function showHow(p, article) {
 }
 
 function showHelp(section) {
-  openDialog("So funktioniert diffgesetz", $("#tpl-help").innerHTML);
+  openDialog("So funktioniert bundesdiff", $("#tpl-help").innerHTML);
   if (section) document.getElementById(`help-${section}`)?.scrollIntoView();
 }
 

@@ -82,7 +82,7 @@ def export(site: Path, days: int = 365, max_new: int = 50, retry_hours: float = 
     shutil.copytree(STATIC, site / "static")
     index = (STATIC / "index.html").read_text()
     index = index.replace('<script src="static/app.js">',
-                          '<script>window.DIFFGESETZ_STATIC = true;</script>\n  <script src="static/app.js">')
+                          '<script>window.BUNDESDIFF_STATIC = true;</script>\n  <script src="static/app.js">')
     (site / "index.html").write_text(index)
     (site / "static" / "index.html").unlink()
     (site / ".nojekyll").write_text("")

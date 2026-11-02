@@ -1,5 +1,5 @@
 [project]
-name = "diffgesetz"
+name = "bundesdiff"
 version = "0.1.0"
 description = "Synopse (Diff-Ansicht) für Änderungen im Bundesgesetzblatt"
 requires-python = ">=3.13"
@@ -17,11 +17,11 @@ dev = [
 ]
 
 [project.scripts]
-diffgesetz = "diffgesetz.cli:main"
+bundesdiff = "bundesdiff.cli:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["diffgesetz"]
+packages = ["bundesdiff"]

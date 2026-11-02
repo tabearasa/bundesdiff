@@ -1,11 +1,11 @@
-# diffgesetz
+# bundesdiff
 
 A web app that shows what a Bundesgesetzblatt publication actually changes, as a side-by-side
 diff (Synopse) of the old and new wording of every affected paragraph.
 
 Verkündungen on [recht.bund.de](https://www.recht.bund.de) are published only as PDFs of
 *Änderungsbefehle*, e.g. "§ 2 Absatz 1 wird durch den folgenden Absatz 1 ersetzt: „…“".
-diffgesetz reads these instructions, applies them to the consolidated law text and renders
+bundesdiff reads these instructions, applies them to the consolidated law text and renders
 the result.
 
 ## Running it
@@ -14,21 +14,21 @@ Requires Python ≥ 3.13 and [uv](https://docs.astral.sh/uv/).
 
 ```sh
 uv sync
-uv run diffgesetz serve               # live app, http://127.0.0.1:8000
-uv run diffgesetz serve --port 8765
+uv run bundesdiff serve               # live app, http://127.0.0.1:8000
+uv run bundesdiff serve --port 8765
 
-uv run diffgesetz export --site _site # static website with precomputed data (last 365 days)
+uv run bundesdiff export --site _site # static website with precomputed data (last 365 days)
 python3 -m http.server -d _site 8080  # view it locally
 
-uv run diffgesetz prune --days 365 --archive archiv/old.tar.gz  # move older data into an archive
+uv run bundesdiff prune --days 365 --archive archiv/old.tar.gz  # move older data into an archive
 ```
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
 | `HOST` / `PORT` | `127.0.0.1` / `8000` | listen address of `serve` |
-| `DIFFGESETZ_CACHE` | `~/.cache/diffgesetz` | HTTP cache (disposable) |
-| `DIFFGESETZ_DATA` | = cache dir | analysis results and stored law versions (worth keeping) |
-| `DIFFGESETZ_WATCH_MINUTES` | `60` | `serve` only: how often new issues are analyzed in the background (`0` disables) |
+| `BUNDESDIFF_CACHE` | `~/.cache/bundesdiff` | HTTP cache (disposable) |
+| `BUNDESDIFF_DATA` | = cache dir | analysis results and stored law versions (worth keeping) |
+| `BUNDESDIFF_WATCH_MINUTES` | `60` | `serve` only: how often new issues are analyzed in the background (`0` disables) |
 
 Tests (offline): `uv run pytest`
 
@@ -37,11 +37,11 @@ Tests (offline): `uv run pytest`
 `.github/workflows/update.yml` runs every hour (and manually via *Run workflow*):
 
 1. Checks out the **`data` branch** (created on the first run) into `store/`.
-2. `diffgesetz export`: analyzes up to 50 new publications from the **last 365 days**,
+2. `bundesdiff export`: analyzes up to 50 new publications from the **last 365 days**,
    newest first. The first backfill (about 400 issues of Teil I) therefore takes about 8 runs. Failed
    analyses are retried after 24 hours.
-3. `diffgesetz prune`: moves everything **older than one year** into a
-   `diffgesetz-archiv-YYYY-MM-DD.tar.gz` file and deletes it from the `data` branch. This
+3. `bundesdiff prune`: moves everything **older than one year** into a
+   `bundesdiff-archiv-YYYY-MM-DD.tar.gz` file and deletes it from the `data` branch. This
    covers analysis results, and law versions except the newest version of each law, which
    is still needed as the "before" text. The file is attached to the monthly
    **GitHub Release** `archiv-YYYY-MM`.
@@ -112,6 +112,6 @@ rather than archive snapshots.
   conjunction with § 7 Datennutzungsgesetz.
 * gesetze-im-internet.de offers its XML for automated processing and allows deep links.
 * The NeuRIS API (test phase) explicitly allows building applications on it; its limit of
-  600 requests per minute is far above what diffgesetz uses (all responses are cached).
-* diffgesetz is not an official service and gives no individual legal advice. Every page says
+  600 requests per minute is far above what bundesdiff uses (all responses are cached).
+* bundesdiff is not an official service and gives no individual legal advice. Every page says
   that only the official Bundesgesetzblatt is binding.

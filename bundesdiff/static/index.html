@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>diffgesetz – Was ändert sich im Gesetz?</title>
+  <title>bundesdiff – Was ändert sich im Gesetz?</title>
   <meta name="description" content="Zeigt für jede Veröffentlichung im Bundesgesetzblatt, wie sich der Gesetzestext ändert – vorher und nachher nebeneinander.">
   <meta name="color-scheme" content="light dark">
   <script>
     // apply the saved colour theme before the first paint (no flash)
-    try { const t = localStorage.getItem("diffgesetz.theme"); if (t) document.documentElement.dataset.theme = t; } catch {}
+    try { const t = localStorage.getItem("bundesdiff.theme"); if (t) document.documentElement.dataset.theme = t; } catch {}
   </script>
   <link rel="stylesheet" href="static/style.css">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%237a2418'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='white' font-family='Georgia'%3E§%3C/text%3E%3C/svg%3E">
@@ -17,7 +17,7 @@
   <header class="topbar">
     <a class="brand" href="#/">
       <span class="brand-mark">§</span>
-      <span class="brand-text">diffgesetz <small>Was ändert sich im Gesetz?</small></span>
+      <span class="brand-text">bundesdiff <small>Was ändert sich im Gesetz?</small></span>
     </a>
     <div class="topbar-controls">
       <div class="segmented" role="group" aria-label="Darstellung der Änderungen">
@@ -56,7 +56,7 @@
         <blockquote class="example">„In § 4 Absatz 1 wird die Angabe „zwei Monate“ durch die Angabe „fünf Wochen“ ersetzt.“</blockquote>
         <p>
           Um zu verstehen, was sich wirklich ändert, müsste man das Gesetz danebenlegen und die Änderung von Hand einarbeiten.
-          <strong>diffgesetz erledigt das automatisch</strong> und zeigt beide Fassungen nebeneinander:
+          <strong>bundesdiff erledigt das automatisch</strong> und zeigt beide Fassungen nebeneinander:
         </p>
         <div class="example-diff" aria-hidden="true">
           <div><span class="label">− Vorher</span><span>… können <del>zwei Monate</del> vor Inkrafttreten bezogen werden.</span></div>
@@ -88,7 +88,7 @@
         <li><strong>Veröffentlichung holen.</strong> Das amtliche PDF wird von recht.bund.de geladen, der offiziellen Plattform des Bundesgesetzblatts.</li>
         <li><strong>Anweisungen erkennen.</strong> Der Text wird in seine Artikel zerlegt. Jede Änderungsanweisung („… wird gestrichen“, „Nach Absatz 3 wird folgender Absatz eingefügt …“) wird erkannt: <em>was</em> geändert wird, <em>wo</em> und <em>wie</em>.</li>
         <li><strong>Betroffenes Gesetz finden.</strong> Der aktuelle Text des geänderten Gesetzes wird aus dem Rechtsinformationsportal des Bundes oder von gesetze-im-internet.de geladen.</li>
-        <li><strong>Vorher und Nachher bestimmen.</strong> Diese Datenbanken werden meist innerhalb weniger Tage aktualisiert. diffgesetz prüft daher für jede Vorschrift, ob der aktuelle Text die Änderung schon enthält:
+        <li><strong>Vorher und Nachher bestimmen.</strong> Diese Datenbanken werden meist innerhalb weniger Tage aktualisiert. bundesdiff prüft daher für jede Vorschrift, ob der aktuelle Text die Änderung schon enthält:
           <ul>
             <li><span class="badge applied">neuer Text berechnet</span> Noch nicht enthalten: Der aktuelle Text ist „Vorher“, der neue Text wird durch Anwenden der Anweisungen berechnet.</li>
             <li><span class="badge consolidated">alter Text rekonstruiert</span> Schon enthalten: Der aktuelle Text ist „Nachher“, der alte Text wird zurückgerechnet – notfalls mithilfe einer archivierten älteren Fassung (Internet Archive).</li>
@@ -100,8 +100,8 @@
     <section id="help-status">
       <h3>Was bedeuten die Markierungen?</h3>
       <dl class="legend">
-        <div><dt><span class="badge applied">neuer Text berechnet</span></dt><dd>Das Gesetz im Internet ist noch nicht aktualisiert; diffgesetz zeigt, wie es nach der Änderung lauten wird.</dd></div>
-        <div><dt><span class="badge consolidated">alter Text rekonstruiert</span></dt><dd>Das Gesetz im Internet ist schon aktualisiert; diffgesetz zeigt zusätzlich, wie es vorher lautete.</dd></div>
+        <div><dt><span class="badge applied">neuer Text berechnet</span></dt><dd>Das Gesetz im Internet ist noch nicht aktualisiert; bundesdiff zeigt, wie es nach der Änderung lauten wird.</dd></div>
+        <div><dt><span class="badge consolidated">alter Text rekonstruiert</span></dt><dd>Das Gesetz im Internet ist schon aktualisiert; bundesdiff zeigt zusätzlich, wie es vorher lautete.</dd></div>
         <div><dt><span class="badge failed">nicht anwendbar</span></dt><dd>Die Anweisung passte nicht zum Gesetzestext (z. B. ungewöhnliche Formulierung). Sie ist nur im Wortlaut zu sehen.</dd></div>
         <div><dt><span class="badge unsupported">nicht dargestellt</span></dt><dd>Änderungen an Inhaltsverzeichnissen, Anlagen und Tabellen werden nicht gegenübergestellt.</dd></div>
         <div><dt><del>durchgestrichen</del></dt><dd>Text, der wegfällt.</dd></div>
@@ -111,7 +111,7 @@
     <section id="help-terms">
       <h3>Kleines Wörterbuch</h3>
       <dl class="glossary">
-        <dt>Bundesgesetzblatt (BGBl.)</dt><dd>Das amtliche Veröffentlichungsblatt des Bundes. Erst mit der Veröffentlichung dort („Verkündung“) wird ein Gesetz wirksam. diffgesetz zeigt Teil I – die Gesetze und Verordnungen für Deutschland.</dd>
+        <dt>Bundesgesetzblatt (BGBl.)</dt><dd>Das amtliche Veröffentlichungsblatt des Bundes. Erst mit der Veröffentlichung dort („Verkündung“) wird ein Gesetz wirksam. bundesdiff zeigt Teil I – die Gesetze und Verordnungen für Deutschland.</dd>
         <dt>Gesetz / Verordnung</dt><dd>Ein Gesetz beschließt der Bundestag. Eine Verordnung erlässt die Regierung oder ein Ministerium auf Grundlage eines Gesetzes – sie regelt meist Details.</dd>
         <dt>Änderungsgesetz</dt><dd>Ein Gesetz, das bestehende Gesetze ändert. Es enthält nicht den neuen Gesamttext, sondern nur die Anweisungen, was zu ändern ist.</dd>
         <dt>Artikel</dt><dd>Ein Änderungsgesetz ist in Artikel gegliedert; oft ändert jeder Artikel ein anderes Gesetz. Der letzte Artikel regelt meist, ab wann alles gilt („Inkrafttreten“).</dd>
@@ -119,7 +119,7 @@
         <dt>Fassung</dt><dd>Der Wortlaut eines Gesetzes zu einem bestimmten Zeitpunkt. „Bisherige Fassung“ = vor der Änderung, „neue Fassung“ = danach.</dd>
         <dt>Inkrafttreten</dt><dd>Der Tag, ab dem eine Regelung gilt. Er kann nach der Veröffentlichung liegen.</dd>
         <dt>„(weggefallen)“</dt><dd>Platzhalter für eine aufgehobene Vorschrift, damit sich die Nummerierung der übrigen nicht verschiebt.</dd>
-        <dt>Synopse</dt><dd>Fachwort für die Gegenüberstellung von alter und neuer Fassung – das, was diffgesetz erzeugt.</dd>
+        <dt>Synopse</dt><dd>Fachwort für die Gegenüberstellung von alter und neuer Fassung – das, was bundesdiff erzeugt.</dd>
       </dl>
     </section>
     <section id="help-sources">
@@ -132,7 +132,7 @@
     <div class="loading">
       <div class="spinner" aria-hidden="true"></div>
       <p>Die Veröffentlichung wird ausgewertet …</p>
-      <p class="hint">diffgesetz liest das amtliche PDF und lädt die betroffenen Gesetze. Beim ersten Aufruf kann das bis zu einer Minute dauern – danach geht es sofort.</p>
+      <p class="hint">bundesdiff liest das amtliche PDF und lädt die betroffenen Gesetze. Beim ersten Aufruf kann das bis zu einer Minute dauern – danach geht es sofort.</p>
     </div>
   </template>
 

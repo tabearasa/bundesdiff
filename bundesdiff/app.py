@@ -17,10 +17,10 @@ from fastapi.staticfiles import StaticFiles
 from . import sources, store
 from .analysis import analyze
 
-log = logging.getLogger("diffgesetz")
+log = logging.getLogger("bundesdiff")
 STATIC = Path(__file__).parent / "static"
 RESULT_TTL = 6 * 3600  # analyses are recomputed after this many seconds
-WATCH_MINUTES = float(os.environ.get("DIFFGESETZ_WATCH_MINUTES", "60"))
+WATCH_MINUTES = float(os.environ.get("BUNDESDIFF_WATCH_MINUTES", "60"))
 
 _locks: dict[str, threading.Lock] = {}
 _locks_guard = threading.Lock()
@@ -75,7 +75,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="diffgesetz", lifespan=lifespan)
+app = FastAPI(title="bundesdiff", lifespan=lifespan)
 
 
 @app.get("/api/publications")

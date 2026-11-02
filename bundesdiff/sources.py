@@ -26,7 +26,7 @@ from .model import Node, comparable, label_kind, normalize, par_key, parse_label
 RECHT_BUND = "https://www.recht.bund.de"
 NEURIS = "https://testphase.rechtsinformationen.bund.de"
 GII = "https://www.gesetze-im-internet.de"
-USER_AGENT = "diffgesetz/0.1 (+https://github.com/; Synopse-Werkzeug)"
+USER_AGENT = "bundesdiff/0.1 (+https://github.com/; Synopse-Werkzeug)"
 
 CACHE_DIR = store.CACHE_DIR
 

@@ -58,16 +58,16 @@ jobs:
 
       - name: Analyze new publications and build site
         env:
-          DIFFGESETZ_DATA: ${{ github.workspace }}/store
-        run: uv run diffgesetz export --site _site --days 365 --max-new "${{ inputs.max_new || '50' }}"
+          BUNDESDIFF_DATA: ${{ github.workspace }}/store
+        run: uv run bundesdiff export --site _site --days 365 --max-new "${{ inputs.max_new || '50' }}"
 
       - name: Move data older than one year to an archive
         id: prune
         env:
-          DIFFGESETZ_DATA: ${{ github.workspace }}/store
+          BUNDESDIFF_DATA: ${{ github.workspace }}/store
         run: |
-          archive="archiv/diffgesetz-archiv-$(date -u +%F).tar.gz"
-          uv run diffgesetz prune --days 365 --archive "$archive"
+          archive="archiv/bundesdiff-archiv-$(date -u +%F).tar.gz"
+          uv run bundesdiff prune --days 365 --archive "$archive"
           if [ -f "$archive" ]; then echo "archive=$archive" >> "$GITHUB_OUTPUT"; fi
 
       # One release per month collects that month's archives and the history bundle.

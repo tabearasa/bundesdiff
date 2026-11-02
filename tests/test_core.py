@@ -1,9 +1,9 @@
 """Offline tests for instruction parsing, application and diffing."""
 
-from diffgesetz.amendments import parse_citation, parse_instructions, parse_location
-from diffgesetz.diffing import diff_units, word_diff
-from diffgesetz.engine import Snapshots, check, find_par, forward, reverse, run
-from diffgesetz.model import Node, render_lines, split_sentences, tree_from_lines
+from bundesdiff.amendments import parse_citation, parse_instructions, parse_location
+from bundesdiff.diffing import diff_units, word_diff
+from bundesdiff.engine import Snapshots, check, find_par, forward, reverse, run
+from bundesdiff.model import Node, render_lines, split_sentences, tree_from_lines
 
 
 def law() -> Node:
