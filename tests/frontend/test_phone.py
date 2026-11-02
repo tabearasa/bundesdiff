@@ -513,8 +513,8 @@ def test_menu_opens_above_its_button_and_leads_everywhere(app, page):
     button.click()
     expect(menu(page)).to_be_visible()
     expect(button).to_have_attribute("aria-expanded", "true")
-    # measured once it has opened: while it grows out of its button it still reaches over it
-    page.wait_for_function("document.getAnimations().every(a => a.playState !== 'running')")
+    # its final place; while it opens: test_menu_never_covers_its_button_while_it_opens
+    page.wait_for_function("document.getElementById('menu').getAnimations().every(a => a.playState !== 'running')")
     assert menu(page).bounding_box()["y"] + menu(page).bounding_box()["height"] <= button.bounding_box()["y"] + 1
     expect(menu(page).get_by_role("link", name="bundesdiff – Startseite")).to_be_visible()
     current = menu(page).get_by_role("link", name="Veröffentlichungen")
@@ -545,6 +545,22 @@ def test_menu_opens_above_its_button_and_leads_everywhere(app, page):
     expect(menu(page)).to_be_hidden()
     button.click()
     expect(menu(page).get_by_role("link", name="Über bundesdiff")).to_have_attribute("aria-current", "page")
+
+
+@pytest.mark.spec("PTL-6")
+def test_menu_never_covers_its_button_while_it_opens(app, page):
+    """The menu grows out of its button: in no frame of the opening does it reach over it."""
+    on_phone(app, page, theme="light")
+    button = bar(page).get_by_role("button", name="Menü")
+    top = button.bounding_box()["y"]
+    frames = page.evaluate("""() => new Promise(done => {
+        const menu = document.getElementById('menu'), seen = [], end = performance.now() + 500;
+        const step = () => { if (menu.open) seen.push(menu.getBoundingClientRect().bottom);
+                             performance.now() < end ? requestAnimationFrame(step) : done(seen); };
+        document.getElementById('fab-menu').click();
+        step(); })""")
+    assert frames, "the menu did not open"
+    assert max(frames) <= top + 1, f"the menu reaches {max(frames) - top:.1f} px over its button: {frames}"
 
 
 @pytest.mark.spec("PTL-7", "PTL-A2")
