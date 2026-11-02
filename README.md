@@ -1,5 +1,11 @@
 # bundesdiff
 
+[![Tests](https://github.com/tabearasa/REPO/actions/workflows/tests.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/tests.yml)
+[![Coverage](https://raw.githubusercontent.com/tabearasa/bundesdiff/badges/coverage.svg)](https://github.com/OWNER/REPO/actions/workflows/tests.yml)
+[![Ruff](https://raw.githubusercontent.com/tabearasa/bundesdiff/badges/ruff.svg)](https://github.com/OWNER/REPO/actions/workflows/tests.yml)
+[![License: MIT](.github/badges/license.svg)](LICENSE)
+
+**Goal:** everyone, not only lawyers, can see what a new federal law changes.
 A web app that shows what a Bundesgesetzblatt publication actually changes, as a side-by-side
 diff (Synopse) of the old and new wording of every affected paragraph.
 
@@ -28,17 +34,46 @@ uv run bundesdiff prune --days 365 --archive archiv/old.tar.gz  # move older dat
 | `HOST` / `PORT` | `127.0.0.1` / `8000` | listen address of `serve` |
 | `BUNDESDIFF_CACHE` | `~/.cache/bundesdiff` | HTTP cache (disposable) |
 | `BUNDESDIFF_DATA` | = cache dir | analysis results and stored law versions (worth keeping) |
-| `BUNDESDIFF_WATCH_MINUTES` | `60` | `serve` only: how often new issues are analyzed in the background (`0` disables) |
+| `BUNDESDIFF_WATCH_MINUTES` | `1440` | `serve` only: how often new issues are analyzed in the background (`0` disables) |
 
-Tests (offline): `uv run pytest`
+## Tests
+
+```sh
+uv run playwright install chromium   # once
+uv run pytest                        # all tests, offline (about 45 s)
+uv run pytest tests/frontend -k phone  # e.g. only the phone layouts
+uv run playwright install firefox webkit
+uv run pytest tests/frontend --browser firefox   # the same tests in Firefox (or webkit)
+```
+
+* `tests/test_specs.py`: every requirement of an accepted spec in `specs/` has a test
+  (`@pytest.mark.spec("ID")`).
+* `tests/test_core.py`: parsing of amendment instructions, applying and reversing them, diffing.
+* `tests/frontend/`: the web app in a real browser (Playwright, Chromium), with fixed test data
+  from `tests/frontend/fixtures/` and a fixed clock.
+  * `test_phone.py`: the phone layout (round buttons, menu, the timeline as a lens), the blurred
+    page behind windows and the shapes of controls (specs 004, 005, 007).
+  * `test_behaviour.py`: what readers do: search, filter, open a publication, switch views,
+    fold, tabs, dialogs, light/dark, phone layout, keyboard, browser back, live API mode.
+  * `test_layout.py`: every kind of page on desktop, tablet, phone (portrait and landscape)
+    and a 320 px phone, in light and dark mode, at 200 % and 400 % browser zoom and with wider
+    text spacing, checked by `layout.js` (no horizontal scrolling, no cut-off or overflowing
+    text, no overlapping or covered controls, click targets ≥ 24 px, text ≥ 12 px, no words torn
+    apart without a hyphen) and by
+    axe-core (all WCAG 2.2 A/AA rules: contrast, labels, ARIA, landmarks). Every test also fails on JavaScript errors and failed requests.
+  * Screenshots of all combinations land in `test-results/screenshots/`. Failing tests leave
+    a screenshot and a Playwright trace in `test-results/failures/`.
+* GitHub Actions (`.github/workflows/tests.yml`) runs everything on every push in Chromium,
+  Firefox and WebKit (Safari) and uploads the screenshots as `frontend-screenshots-<browser>`.
 
 ## Automatic updates with GitHub Actions
 
-`.github/workflows/update.yml` runs every hour (and manually via *Run workflow*):
+`.github/workflows/update.yml` runs once a day at 19:23 UTC (and manually via *Run workflow*):
 
 1. Checks out the **`data` branch** (created on the first run) into `store/`.
 2. `bundesdiff export`: analyzes up to 50 new publications from the **last 365 days**,
-   newest first. The first backfill (about 400 issues of Teil I) therefore takes about 8 runs. Failed
+   newest first. The first backfill (about 400 issues of Teil I) would take about 8 days; start it
+   once by hand with *Run workflow* and `max_new` = 500 instead. Failed
    analyses are retried after 24 hours.
 3. `bundesdiff prune`: moves everything **older than one year** into a
    `bundesdiff-archiv-YYYY-MM-DD.tar.gz` file and deletes it from the `data` branch. This
@@ -62,7 +97,9 @@ month the branch grows slowly.
 **GitHub Pages** is off. On the Free plan, Pages is not available for private repositories,
 and on paid plans the site would be publicly reachable even when the repository is private.
 To publish, set the repository variable `DEPLOY_PAGES=true` and select *GitHub Actions* as
-the Pages source. The static frontend only reads relative `data/…` files, so any static web
+the Pages source. The site is only published when the tests (`tests.yml`) passed for the
+current commit. Before making it public, add an Impressum (operator's name and address) to the
+about page (`tpl-about` in `bundesdiff/static/index.html`). The static frontend only reads relative `data/…` files, so any static web
 host works too.
 
 ## How it works
@@ -115,3 +152,12 @@ rather than archive snapshots.
   600 requests per minute is far above what bundesdiff uses (all responses are cached).
 * bundesdiff is not an official service and gives no individual legal advice. Every page says
   that only the official Bundesgesetzblatt is binding.
+
+## Contributing and ideas
+
+Ideas are welcome, also without code: see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+[MIT](LICENSE). The laws and the Bundesgesetzblatt themselves are official works and not
+protected by copyright (§ 5 UrhG).

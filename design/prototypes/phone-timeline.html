@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Entwurf – Zeitleiste auf dem Handy</title>
+<meta name="color-scheme" content="light dark">
+<!--
+  Clickable mock-up of spec 004 (phone timeline), 005 (blur) and 007 (shapes).
+  NOT part of the website: no tests, not shipped. Open it on a phone:
+  python3 -m http.server --bind <LAN-IP> 8766 -d design/prototypes
+  Build and serve: see build.py (the cards open the real app in site/).
+-->
+<style>
+:root {
+  --desk: #efebe2; --paper: #fffdf8; --paper-2: #f8f5ee; --rule: #e4ddcf; --rule-strong: #cfc6b4;
+  --frame: #9c907a;  /* spec 007: frames of controls, ≥ 3:1 against the paper */
+  --ink: #1d1b18; --ink-soft: #4a463f; --muted: #6a6458; --accent: #7a2418; --link: #6e2a1c;
+  --serif: "Times New Roman", Times, "Liberation Serif", "Nimbus Roman", Tinos, serif;
+  --shadow: 0 1px 0 rgba(60, 45, 20, .04), 0 1px 3px rgba(60, 45, 20, .08), 0 10px 24px -14px rgba(60, 45, 20, .35);
+  --veil: rgba(40, 32, 18, .22);
+  --axis: 22px;      /* x of the time axis */
+  --card-x: 50px;    /* left edge of the entries */
+}
+:root[data-theme="dark"] {
+  --desk: #161512; --paper: #1f1d19; --paper-2: #262420; --rule: #34312b; --rule-strong: #47433b; --frame: #7d7466;
+  --ink: #ece6da; --ink-soft: #c9c2b4; --muted: #9a9284; --accent: #e0907f; --link: #e8a998;
+  --shadow: 0 0 0 1px #2b2924, 0 12px 26px -12px rgba(0, 0, 0, .6); --veil: rgba(0, 0, 0, .35);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --desk: #161512; --paper: #1f1d19; --paper-2: #262420; --rule: #34312b; --rule-strong: #47433b; --frame: #7d7466;
+    --ink: #ece6da; --ink-soft: #c9c2b4; --muted: #9a9284; --accent: #e0907f; --link: #e8a998;
+    --shadow: 0 0 0 1px #2b2924, 0 12px 26px -12px rgba(0, 0, 0, .6); --veil: rgba(0, 0, 0, .35);
+  }
+}
+* { box-sizing: border-box; }
+html { background: var(--desk); -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0 auto; max-width: 560px; min-height: 100vh; background: var(--paper); color: var(--ink);
+  font: 18px/1.45 var(--serif); hyphens: auto; overflow-wrap: break-word; -webkit-font-smoothing: antialiased;
+  transition: background-color .3s, color .3s;
+}
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+a { color: var(--link); }
+
+/* ---------- masthead: no navbar (PTL-10) ---------- */
+.draft {
+  margin: 0; padding: 6px 16px; font-size: 14px; font-style: italic; text-align: center; color: var(--muted);
+  background: var(--paper-2); border-bottom: 1px solid var(--rule);
+}
+.masthead { padding: 26px 16px 8px; text-align: center; }
+.masthead .name { font-size: 16px; font-variant: small-caps; letter-spacing: .12em; color: var(--accent); }
+.masthead h1 { margin: 6px 0 0; font-weight: normal; font-size: 30px; line-height: 1.15; }
+.masthead h1::after {
+  content: "§"; display: block; margin: 12px auto 0; font-size: 16px; color: var(--accent);
+  background: linear-gradient(var(--rule-strong), var(--rule-strong)) left 50% / 40% 1px no-repeat,
+              linear-gradient(var(--rule-strong), var(--rule-strong)) right 50% / 40% 1px no-repeat;
+}
+
+/* ---------- the timeline ---------- */
+.timeline { position: relative; list-style: none; margin: 0; padding: 10px 14px 55vh 0; }
+.timeline::before { /* the time axis */
+  content: ""; position: absolute; left: var(--axis); top: 0; bottom: 0; width: 1px; background: var(--rule-strong);
+}
+.month {
+  position: relative; margin: 22px 0 10px; padding-left: var(--card-x);
+  font-size: 17px; font-variant: small-caps; letter-spacing: .08em; color: var(--accent);
+}
+.month::before { /* a short cross rule on the axis */
+  content: ""; position: absolute; left: calc(var(--axis) - 7px); top: 50%; width: 15px; height: 1px; background: var(--accent);
+}
+.month-name { all: unset; }
+.day { position: relative; list-style: none; margin: 0 0 18px; }
+.day-head { position: relative; padding-left: var(--card-x); margin-bottom: 6px; font-size: 15px; font-style: italic; color: var(--muted); }
+.day-head::before { /* the day's mark on the axis */
+  content: ""; position: absolute; left: calc(var(--axis) - 4px); top: 50%; margin-top: -4px; width: 9px; height: 9px;
+  border-radius: 50%; background: var(--paper); border: 1px solid var(--accent);
+}
+.entries { list-style: none; margin: 0; padding: 0; }
+.entry { position: relative; padding-left: var(--card-x); margin-top: 8px; }
+.entry::after { /* its own straight line from the time axis to the entry (PTL-3); the card scales
+                  around its left middle, so the line always meets it */
+  content: ""; position: absolute; left: calc(var(--axis) + 1px); top: 50%; width: calc(var(--card-x) - var(--axis) - 1px); height: 1px; background: var(--rule-strong);
+}
+.entry::before { /* where the line meets the axis */
+  content: ""; position: absolute; left: calc(var(--axis) - 2px); top: 50%; margin-top: -2px; width: 5px; height: 5px; border-radius: 50%; background: var(--rule-strong);
+}
+.entry.focus::after, .entry.focus::before { background: var(--accent); }
+
+.card {
+  display: block; width: 100%; padding: 10px 14px 11px; text-align: left; font: inherit; color: inherit; cursor: pointer; text-decoration: none;
+  background: var(--paper); border: 1px solid var(--rule); border-radius: 3px;
+  transform-origin: 0 50%; will-change: transform, opacity;
+}
+.card:hover { border-color: var(--frame); }
+.entry.focus .card:hover { border-color: var(--accent); }
+.entry .card:active { transform: scale(.98) !important; transition: transform .1s; } /* pressed: the publication opens */
+.typ { display: block; font-size: 14px; font-variant: small-caps; letter-spacing: .06em; color: var(--muted); }
+.typ.gesetz { color: var(--accent); }
+.title {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
+  font-size: 17px; line-height: 1.3;
+}
+.more { display: none; }
+
+/* the entry in the middle of the screen: enlarged into a card (PTL-2) */
+.entry.focus .card {
+  padding: 16px 18px 16px; border-color: var(--frame); box-shadow: var(--shadow);
+  animation: grow .38s cubic-bezier(.2, .8, .2, 1.15);
+}
+.entry.focus .title { display: block; font-size: 20px; line-height: 1.25; margin-top: 2px; }
+.entry.focus .more { display: block; animation: fade .4s .08s both; }
+.more .topics { margin: 10px 0 0; font-size: 15px; font-style: italic; color: var(--ink-soft); }
+.more .changes { margin: 10px 0 0; font-size: 16px; }
+.more .cite { margin: 2px 0 0; font-size: 14px; font-variant: all-small-caps; letter-spacing: .06em; color: var(--muted); }
+@keyframes grow { from { transform: scale(.93); box-shadow: none; } to { transform: none; } }
+@keyframes fade { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.timeline .day { animation: rise .5s both; }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+/* ---------- the round buttons (PTL-5, SHAPE-4) ---------- */
+.fab-bar {
+  position: fixed; left: 50%; bottom: 0; transform: translateX(-50%); z-index: 5;
+  width: 100%; max-width: 560px; display: flex; gap: 12px; align-items: center;
+  padding: 0 16px calc(16px + env(safe-area-inset-bottom)); pointer-events: none;
+}
+.fab-bar .spacer { flex: 1; }
+.fab-bar::before { /* paper fades in behind the buttons, so text does not run into them */
+  content: ""; position: absolute; inset: -28px 0 0; z-index: -1;
+  background: linear-gradient(to bottom, transparent, var(--paper) 55%);
+}
+.fab {
+  pointer-events: auto; display: grid; place-items: center; width: 52px; height: 52px; padding: 0;
+  border: 1px solid var(--frame); border-radius: 50%; background: var(--paper); color: var(--ink); cursor: pointer;
+  box-shadow: var(--shadow); transition: transform .18s, border-color .18s, color .18s;
+}
+.fab:hover, .fab[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
+.fab:active { transform: scale(.92); }
+.fab svg { display: block; width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }
+.fab .q { font: 27px/1 var(--serif); transform: translateY(1px); }
+
+/* ---------- windows: grow out of their button, page behind blurred (PTL-6/7, SBL-1) ---------- */
+dialog {
+  padding: 0; border: 1px solid var(--frame); border-radius: 3px; background: var(--paper); color: var(--ink);
+  box-shadow: var(--shadow);
+}
+dialog::backdrop { background: var(--veil); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+dialog[open] { animation: open .32s cubic-bezier(.2, .8, .2, 1.1); }
+dialog[open]::backdrop { animation: veil .25s both; }
+dialog.closing { animation: shut .2s ease-in both; }
+dialog.closing::backdrop { animation: veil .2s reverse both; }
+@keyframes open { from { opacity: 0; transform: scale(.35); } to { opacity: 1; transform: none; } }
+@keyframes shut { to { opacity: 0; transform: scale(.35); } }
+@keyframes veil { from { opacity: 0; } to { opacity: 1; } }
+
+.menu {
+  position: fixed; inset: auto auto calc(84px + env(safe-area-inset-bottom)) 16px; margin: 0;
+  width: min(300px, calc(100vw - 32px)); transform-origin: 26px calc(100% + 58px);
+}
+.win-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px 10px; border-bottom: 1px solid var(--rule); }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; }
+.brand-mark { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--accent); border-radius: 50%; color: var(--accent); font-size: 19px; line-height: 1; }
+.brand-text { font-size: 19px; font-variant: small-caps; letter-spacing: .06em; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding: 0 12px;
+  border: 1px solid var(--frame); border-radius: 3px; background: var(--paper); color: var(--ink-soft);
+  font: 16px/1 var(--serif); cursor: pointer;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.close {
+  display: grid; place-items: center; flex: none; width: 44px; height: 44px; margin: -6px -8px -6px 0; padding: 0;
+  border: 0; border-radius: 3px; background: none; color: var(--ink-soft); cursor: pointer;
+}
+.close:hover { color: var(--accent); }
+.close svg { display: block; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
+.menu nav ul { list-style: none; margin: 0; padding: 6px 0; }
+.menu nav a {
+  display: block; padding: 10px 16px; font-size: 19px; font-variant: small-caps; letter-spacing: .04em;
+  color: var(--ink-soft); text-decoration: none;
+}
+.menu nav a[aria-current="page"] { color: var(--ink); text-decoration: underline 2px var(--accent); text-underline-offset: 6px; }
+.menu nav a:hover { color: var(--accent); }
+.menu .theme { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px 14px; border-top: 1px solid var(--rule); font-size: 17px; color: var(--ink-soft); }
+
+/* light/dark switch redrawn to spec 007: rectangle, square knob */
+.switch { display: inline-flex; padding: 4px 0; border: 0; background: none; cursor: pointer; color: var(--accent); }
+.switch .track { position: relative; width: 50px; height: 28px; border: 1px solid var(--frame); border-radius: 3px; background: var(--paper-2); }
+.switch .knob {
+  position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; display: grid; place-items: center;
+  border: 1px solid var(--accent); border-radius: 2px; background: var(--paper); transition: transform .22s cubic-bezier(.2, .8, .2, 1.2);
+}
+.switch[aria-checked="true"] .knob { transform: translateX(22px); }
+.switch svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.switch[aria-checked="true"] .sun, .switch:not([aria-checked="true"]) .moon { display: none; }
+
+.search {
+  position: fixed; inset: calc(12px + env(safe-area-inset-top)) 12px auto; margin: 0; width: auto; max-width: 536px;
+  margin-inline: auto; max-height: calc(100vh - 120px); transform-origin: calc(100% - 30px) calc(100vh - 60px);
+}
+.search[open] { display: flex; flex-direction: column; }
+.search-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--frame); }
+.search-head svg { width: 20px; height: 20px; flex: none; fill: none; stroke: var(--accent); stroke-width: 1.4; stroke-linecap: round; }
+.search-head input { flex: 1; min-width: 0; padding: 8px 2px; border: 0; background: transparent; font: 20px var(--serif); color: var(--ink); }
+.search-head input:focus-visible { outline: none; }
+.search-head input::-webkit-search-cancel-button { -webkit-appearance: none; display: none; } /* blue browser cross */
+.search-head:focus-within { box-shadow: inset 0 -2px 0 var(--accent); }
+.search-status { margin: 0; padding: 8px 14px 0; font-size: 15px; font-style: italic; color: var(--muted); }
+.results { list-style: none; margin: 0; padding: 4px 0 8px; overflow-y: auto; }
+.results button {
+  display: block; width: 100%; padding: 10px 14px; border: 0; border-bottom: 1px solid var(--rule); background: none;
+  text-align: left; font: 17px/1.3 var(--serif); color: var(--ink); cursor: pointer;
+}
+.results button:hover { background: var(--paper-2); }
+.results b { font-weight: bold; text-decoration: underline; text-underline-offset: 3px; }
+
+.help {
+  position: fixed; inset: auto 12px calc(84px + env(safe-area-inset-bottom)); margin: 0 auto; width: auto; max-width: 536px;
+  max-height: calc(100vh - 120px); overflow-y: auto; transform-origin: calc(100% - 94px) calc(100% + 58px);
+}
+.help h2 { margin: 0; font-weight: normal; font-size: 22px; }
+.help .body { padding: 6px 16px 16px; font-size: 17px; }
+.help .body p { margin: 10px 0; }
+.help del { text-decoration: line-through; background: #fff0ee; color: #82071e; }
+.help ins { text-decoration: underline; background: #ecfbef; color: #0f5323; }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(86px + env(safe-area-inset-bottom)); transform: translate(-50%, 10px); opacity: 0;
+  max-width: calc(100vw - 32px); padding: 8px 14px; border: 1px solid var(--frame); border-radius: 3px;
+  background: var(--paper); box-shadow: var(--shadow); font-size: 16px; transition: opacity .2s, transform .2s; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after, dialog[open], dialog::backdrop { animation: none !important; transition: none !important; }
+}
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+</style>
+<script>try { const t = localStorage.getItem("bundesdiff.theme"); if (t) document.documentElement.dataset.theme = t; } catch {}</script>
+</head>
+<body>
+<p class="draft">Entwurf zum Ausprobieren – nicht die echte Website</p>
+<header class="masthead">
+  <div class="name">bundesdiff</div>
+  <h1>Was ändert sich im Gesetz?</h1>
+</header>
+
+<main>
+  <h2 class="sr-only">Veröffentlichungen, neueste zuerst</h2>
+  <ol class="timeline" id="timeline"></ol>
+</main>
+
+<div class="fab-bar">
+  <button class="fab" id="open-menu" aria-label="Menü" aria-haspopup="dialog" aria-expanded="false">
+    <svg viewBox="0 0 22 22" aria-hidden="true"><path d="M5 8.5h12M5 13.5h12"/></svg>
+  </button>
+  <span class="spacer"></span>
+  <button class="fab" id="open-help" aria-label="So funktioniert's" aria-haspopup="dialog" aria-expanded="false">
+    <span class="q" aria-hidden="true">?</span>
+  </button>
+  <button class="fab" id="open-search" aria-label="Suchen" aria-haspopup="dialog" aria-expanded="false">
+    <svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="9.4" cy="9.4" r="5.6"/><path d="M13.6 13.6l4.6 4.6"/></svg>
+  </button>
+</div>
+
+<dialog class="menu" id="menu" aria-label="Menü">
+  <div class="win-head">
+    <a class="brand" href="#"><span class="brand-mark" aria-hidden="true">§</span><span class="brand-text">bundesdiff</span></a>
+    <button class="close" data-close aria-label="Schließen"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/></svg></button>
+  </div>
+  <nav aria-label="Seiten">
+    <ul>
+      <li><a href="#" aria-current="page" data-close>Veröffentlichungen</a></li>
+      <li><a href="site/#/ueber">Über bundesdiff</a></li>
+    </ul>
+  </nav>
+  <div class="theme">
+    <span id="theme-label">Dunkle Ansicht</span>
+    <button class="switch" id="theme" role="switch" aria-checked="false" aria-labelledby="theme-label">
+      <span class="track" aria-hidden="true"><span class="knob">
+        <svg class="sun" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.6"/><path d="M8 1.6v1.8M8 12.6v1.8M1.6 8h1.8M12.6 8h1.8M3.47 3.47l1.27 1.27M11.26 11.26l1.27 1.27M3.47 12.53l1.27-1.27M11.26 4.74l1.27-1.27"/></svg>
+        <svg class="moon" viewBox="0 0 16 16"><path d="M7.68 2.41A5.6 5.6 0 1 0 13.50 9.45A4.6 4.6 0 0 1 7.68 2.41Z"/></svg>
+      </span></span>
+    </button>
+  </div>
+</dialog>
+
+<dialog class="help" id="help" aria-labelledby="help-title">
+  <div class="win-head"><h2 id="help-title">So funktioniert's</h2><button class="close" data-close aria-label="Schließen"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/></svg></button></div>
+  <div class="body">
+    <p>Neue Gesetze erscheinen im Bundesgesetzblatt meist nur als Anweisung: „In § 4 wird „zwei Monate“ durch „fünf Wochen“ ersetzt“.</p>
+    <p>bundesdiff arbeitet die Änderung in das Gesetz ein und zeigt <del>vorher</del> und <ins>nachher</ins> nebeneinander.</p>
+    <p>Scrollen Sie durch die Zeitleiste: Die Veröffentlichung in der Mitte wird groß gezeigt. Tippen Sie auf eine Veröffentlichung, um sie zu lesen.</p>
+    <p>Rechtsverbindlich ist allein das amtliche Bundesgesetzblatt.</p>
+  </div>
+</dialog>
+
+<dialog class="search" id="search" aria-label="Suchen">
+  <div class="search-head">
+    <svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="9.4" cy="9.4" r="5.6"/><path d="M13.6 13.6l4.6 4.6"/></svg>
+    <input id="q" type="search" autocomplete="off" spellcheck="false" placeholder="Suchbegriff …" aria-label="Gesetze und Veröffentlichungen durchsuchen">
+    <button class="close" data-close aria-label="Schließen"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/></svg></button>
+  </div>
+  <p class="search-status" id="status" role="status"></p>
+  <ul class="results" id="results"></ul>
+</dialog>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script src="phone-timeline-data.js"></script>
+<script>
+"use strict";
+const reduce = matchMedia("(prefers-reduced-motion: reduce)");
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+// the real app (static, test data), built next to this page by build.py
+const APP = "site/";
+
+const pubs = [...window.PUBLICATIONS].sort((a, b) => b.date.localeCompare(a.date) || +b.id.split("/")[2] - +a.id.split("/")[2]);
+const day = (iso) => new Date(iso + "T12:00:00");
+const fmtDay = new Intl.DateTimeFormat("de-DE", { weekday: "long", day: "numeric", month: "long" });
+const fmtMonth = new Intl.DateTimeFormat("de-DE", { month: "long", year: "numeric" });
+
+function changes(p) {
+  if (!p.analyzed) return "Noch nicht ausgewertet";
+  const n = (p.laws || []).length;
+  return n === 0 ? "ändert kein Gesetz" : n === 1 ? `ändert 1 Gesetz: ${esc(p.laws[0].abbr || p.laws[0].name)}` : `ändert ${n} Gesetze`;
+}
+
+// ---------- render: months, days, entries ----------
+let html = "", month = "", date = "", n = 0;
+for (const p of pubs) {
+  const m = p.date.slice(0, 7);
+  if (date && p.date !== date) html += "</ol></li>";
+  if (m !== month) { html += `<li class="month"><h3 class="month-name">${fmtMonth.format(day(p.date))}</h3></li>`; month = m; }
+  if (p.date !== date) {
+    html += `<li class="day" style="animation-delay:${Math.min(n++, 8) * 60}ms"><div class="day-head"><time datetime="${p.date}">${fmtDay.format(day(p.date))}</time></div><ol class="entries">`;
+    date = p.date;
+  }
+  const typ = (p.typ || "").toLowerCase();
+  html += `<li class="entry" data-id="${p.id}"><a class="card" href="${APP}#/${p.id}">
+    <span class="typ ${typ === "gesetz" ? "gesetz" : ""}">${esc(p.typ)}</span>
+    <span class="title">${esc(p.title)}</span>
+    <div class="more">
+      <p class="topics">${esc((p.sachgebiet || "").split("; ").slice(0, 3).join(" · "))}</p>
+      <p class="changes">${changes(p)}</p>
+      <p class="cite">${esc(p.fundstelle)}</p>
+    </div></a></li>`;
+}
+html += "</ol></li>";
+$("#timeline").innerHTML = html;
+const entries = [...document.querySelectorAll(".entry")];
+
+// ---------- the lens: size follows the distance from the middle of the screen ----------
+let focus = null, ticking = false, settleTimer = 0, programmatic = false;
+
+function lens() {
+  ticking = false;
+  const mid = innerHeight / 2;
+  for (const e of entries) {
+    const card = e.firstElementChild;
+    if (e === focus || reduce.matches) { card.style.transform = ""; card.style.opacity = ""; continue; }
+    const r = e.getBoundingClientRect();
+    if (r.bottom < -200 || r.top > innerHeight + 200) continue;
+    const d = Math.min(1, Math.abs(r.top + r.height / 2 - mid) / mid);
+    const k = d * d;
+    card.style.transform = `scale(${(1 - .16 * k).toFixed(3)})`;
+    card.style.opacity = (1 - .5 * k).toFixed(3);
+  }
+}
+
+function nearestToMiddle() {
+  if (scrollY < 8) return entries[0];
+  const mid = innerHeight / 2;
+  let best = null, bd = Infinity;
+  for (const e of entries) {
+    const r = e.getBoundingClientRect();
+    const d = Math.abs(r.top + Math.min(r.height, 120) / 2 - mid);
+    if (d < bd) { bd = d; best = e; }
+  }
+  return best;
+}
+
+function setFocus(e, { center = false } = {}) {
+  if (e !== focus) {
+    const before = e.getBoundingClientRect().top;
+    if (focus) focus.classList.remove("focus");
+    focus = e;
+    e.classList.add("focus");
+    // the previous card shrank: keep the new one where the reader's eye is
+    const shift = e.getBoundingClientRect().top - before;
+    if (shift && !center) { programmatic = true; scrollBy({ top: shift, behavior: "instant" }); }
+  }
+  lens();
+  if (center) centre(e);
+}
+
+function centre(e) {
+  const r = e.getBoundingClientRect();
+  const target = scrollY + r.top + r.height / 2 - innerHeight / 2;
+  programmatic = true;
+  scrollTo({ top: Math.max(0, target), behavior: reduce.matches ? "instant" : "smooth" });
+}
+
+addEventListener("scroll", () => {
+  if (!ticking) { ticking = true; requestAnimationFrame(lens); }
+  clearTimeout(settleTimer);
+  settleTimer = setTimeout(() => {
+    // once the reader stops: the entry in the middle becomes the card
+    if (programmatic) { programmatic = false; return; }
+    const e = nearestToMiddle();
+    if (!e) return;
+    setFocus(e);
+    // then it glides into the middle, like a picker settling on a value
+    const r = e.getBoundingClientRect();
+    if (scrollY > 8 && Math.abs(r.top + r.height / 2 - innerHeight / 2) > 30 && r.height < innerHeight * .8) centre(e);
+  }, 160);
+}, { passive: true });
+addEventListener("resize", lens);
+
+$("#timeline").addEventListener("keydown", (ev) => {
+  const e = ev.target.closest(".entry");
+  if (!e) return;
+  if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
+    ev.preventDefault();
+    const next = entries[entries.indexOf(e) + (ev.key === "ArrowDown" ? 1 : -1)];
+    if (next) { next.firstElementChild.focus({ preventScroll: true }); setFocus(next, { center: true }); }
+  }
+});
+
+// ---------- windows: grow out of their button, close back into it ----------
+const opener = new Map([["menu", $("#open-menu")], ["help", $("#open-help")], ["search", $("#open-search")]]);
+function openWin(id) {
+  const d = document.getElementById(id);
+  for (const o of document.querySelectorAll("dialog[open]")) if (o !== d) closeWin(o, true);
+  d.showModal();
+  opener.get(id).setAttribute("aria-expanded", "true");
+}
+function closeWin(d, now = false) {
+  if (!d.open) return;
+  const done = () => { d.classList.remove("closing"); d.close(); };
+  opener.get(d.id).setAttribute("aria-expanded", "false");
+  if (now || reduce.matches) return done();
+  d.classList.add("closing");
+  d.addEventListener("animationend", done, { once: true });
+}
+for (const [id, btn] of opener) btn.addEventListener("click", () => {
+  const d = document.getElementById(id);
+  d.open ? closeWin(d) : openWin(id);
+  if (id === "search" && d.open) { $("#q").value = ""; search(""); $("#q").focus(); }
+});
+for (const d of document.querySelectorAll("dialog")) {
+  d.addEventListener("cancel", (ev) => { ev.preventDefault(); closeWin(d); });
+  d.addEventListener("click", (ev) => {
+    if (ev.target === d) { // a tap on the blurred page closes the window
+      const r = d.getBoundingClientRect();
+      if (ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) closeWin(d);
+    }
+    if (ev.target.closest("[data-close]")) { ev.preventDefault(); closeWin(d); }
+    const soon = ev.target.closest("[data-soon]");
+    if (soon) { ev.preventDefault(); closeWin(d); toast(soon.dataset.soon); }
+  });
+}
+
+// ---------- light/dark ----------
+const themeBtn = $("#theme");
+const isDark = () => document.documentElement.dataset.theme === "dark" ||
+  (!document.documentElement.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
+themeBtn.setAttribute("aria-checked", isDark());
+themeBtn.addEventListener("click", () => {
+  const t = isDark() ? "light" : "dark";
+  document.documentElement.dataset.theme = t;
+  themeBtn.setAttribute("aria-checked", t === "dark");
+  try { localStorage.setItem("bundesdiff.theme", t); } catch {}
+});
+
+// ---------- search (simplified: titles, topics, law names) ----------
+const fold = (s) => s.toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss");
+function mark(text, words) {
+  let out = esc(text);
+  for (const w of words) out = out.replace(new RegExp(`(${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi"), "<b>$1</b>");
+  return out;
+}
+function search(q) {
+  const words = q.trim().split(/\s+/).filter(Boolean);
+  const res = $("#results");
+  if (!words.length) { res.innerHTML = ""; $("#status").textContent = "Zum Beispiel: Steuer, Rente, Designgesetz"; return; }
+  const hits = pubs.filter((p) => {
+    const hay = fold([p.title, p.typ, p.sachgebiet, ...(p.laws || []).flatMap((l) => [l.name, l.abbr])].join(" "));
+    return words.every((w) => hay.includes(fold(w)));
+  }).slice(0, 30);
+  $("#status").textContent = hits.length ? `${hits.length} Treffer` : `Nichts gefunden für „${q.trim()}“. Versuchen Sie ein kürzeres Wort.`;
+  res.innerHTML = hits.map((p) => `<li><button data-id="${p.id}"><span class="typ">${esc(p.typ)}</span>${mark(p.title, words)}</button></li>`).join("");
+}
+$("#q").addEventListener("input", (ev) => search(ev.target.value));
+$("#results").addEventListener("click", (ev) => {
+  const b = ev.target.closest("button[data-id]");
+  if (!b) return;
+  closeWin($("#search"), true);
+  const e = entries.find((x) => x.dataset.id === b.dataset.id);
+  setFocus(e, { center: true });
+  e.firstElementChild.focus({ preventScroll: true });
+});
+
+let toastTimer = 0;
+function toast(text) {
+  const t = $("#toast");
+  t.textContent = text; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+// back from a publication (the arrow): centre the entry the reader came from
+const back = entries.find((x) => x.dataset.id === decodeURIComponent(location.hash.slice(1)));
+if (back) { setFocus(back); centre(back); } else setFocus(entries[0]);
+</script>
+</body>
+</html>
