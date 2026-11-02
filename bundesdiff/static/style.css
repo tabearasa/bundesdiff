@@ -726,8 +726,8 @@ dialog[open] { animation: window-open .2s ease-out; }
 .timeline-page .data-date:empty { display: none; }
 
 /* the lens (PTL-2, PTL-3): every publication a framed entry on its own line to the axis; the one
-   in the middle of the screen is the card. All entries show the same lines and are equally high,
-   so the card can change while scrolling without the page jumping. */
+   in the middle of the screen is the card. An entry shows the same lines and keeps its height whether
+   it is the card or not, so the card can change while scrolling without the page jumping. */
 .timeline:not(.upcoming) { --to-axis: 14.5px; } /* from the axis (x = 225.5 px) to the entries (240 px) */
 .timeline:not(.upcoming) .tl-entries { padding: 2px 0 10px; }
 .timeline:not(.upcoming) .tl-entries > li { position: relative; margin-top: 8px; }

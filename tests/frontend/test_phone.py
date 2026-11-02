@@ -212,17 +212,36 @@ FRAMES_JS = """ms => new Promise(done => { const seen = [], end = performance.no
 def test_no_entry_jumps_in_size_when_the_card_changes(app, page, viewport):
     """Where two entries meet in the middle, both are at full size: the card changes without a pop."""
     on_phone(app, page, viewport=viewport)
-    page.evaluate("window.scrollTo(0, 2000)")
+    # Start shortly before the middle of the screen reaches a large gap (between two dates): there a
+    # lens that ignored the gaps would show the pop; across the small gaps of one day it hardly could.
+    start = page.evaluate("""() => {
+        const boxes = [...document.querySelectorAll('.timeline:not(.upcoming) .tl-entry')].map(e => {
+            const r = e.getBoundingClientRect(), mid = r.top + r.height / 2 + scrollY;
+            return { top: mid - e.offsetHeight / 2, bottom: mid + e.offsetHeight / 2 }; });
+        for (let i = 1; i < boxes.length; i++) {
+            const gap = boxes[i].top - boxes[i - 1].bottom, at = (boxes[i].top + boxes[i - 1].bottom) / 2;
+            if (gap >= 40 && at - innerHeight / 2 > 1500) return Math.round(at - innerHeight / 2 - 300);
+        }
+        return null; }""")
+    assert start is not None, "no gap of 40 px or more between two entries in the test data"
+    page.evaluate(f"window.scrollTo(0, {start})")
     page.wait_for_timeout(300)
     worst, changes = 0, 0
     for _ in range(100):  # 6 px a frame: a slow, steady scroll
         before = page.evaluate(FRAMES_JS, 0)[0]
         # until the page has handled the scroll: WebKit sends the event of a script scroll some frames
         # later, and a fixed wait would count several steps as one
-        page.evaluate("""new Promise(r => { addEventListener('scroll', () => requestAnimationFrame(
-            () => requestAnimationFrame(r)), { once: true }); scrollBy(0, 6); })""")
+        # (a scroll that does not move the page sends no event: then fail instead of waiting forever)
+        handled = page.evaluate("""new Promise(r => { addEventListener('scroll', () => requestAnimationFrame(
+            () => requestAnimationFrame(() => r(true))), { once: true }); setTimeout(() => r(false), 2000);
+            scrollBy(0, 6); })""")
+        assert handled, "no scroll event within 2 s at scrollY {} (the page ends at {})".format(
+            *page.evaluate("[scrollY, document.documentElement.scrollHeight - innerHeight]"))
         after = page.evaluate(FRAMES_JS, 0)[0]
-        changes += before["card"] != after["card"]
+        if before["card"] != after["card"]:  # where the two cells meet, both entries are at full size
+            changes += 1
+            pair = [x["scales"][i] for x in (before, after) for i in (before["card"], after["card"])]
+            assert min(pair) >= 0.998, f"where the card changes an entry is not at full size: {pair}"
         worst = max(worst, *(abs(a - b) for a, b in zip(before["scales"], after["scales"])))
     assert changes >= 1, "the card never changed"
     assert worst <= 0.012, f"an entry changed its size by {worst:.3f} in one step of 6 px"
