@@ -14,72 +14,102 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%237a2418'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='white' font-family='Georgia'%3E§%3C/text%3E%3C/svg%3E">
 </head>
 <body>
+  <a class="skip-link" href="#main" data-action="skip">Zum Inhalt springen</a>
   <header class="topbar">
-    <a class="brand" href="#/">
-      <span class="brand-mark">§</span>
-      <span class="brand-text">bundesdiff <small>Was ändert sich im Gesetz?</small></span>
-    </a>
-    <div class="topbar-controls">
-      <div class="segmented" role="group" aria-label="Darstellung der Änderungen">
-        <button data-view="split" class="active" title="Alter Text links, neuer Text rechts">Nebeneinander</button>
-        <button data-view="inline" title="Ein einziger Text, Änderungen farbig markiert">Im Text markiert</button>
-      </div>
-      <label class="toggle" title="Abschnitte ohne Änderung einklappen"><input type="checkbox" id="only-changes" checked> Unverändertes ausblenden</label>
-      <button class="icon-btn" id="theme-toggle" title="Hell / Dunkel umschalten" aria-label="Hell / Dunkel umschalten"></button>
-      <button class="help-btn" data-help="" aria-label="Hilfe und Erklärungen">? Hilfe</button>
-    </div>
+    <nav class="navbar" aria-label="Hauptnavigation">
+      <a class="brand" href="#/" aria-label="bundesdiff – Startseite"><span class="brand-mark" aria-hidden="true">§</span><span class="brand-text">bundesdiff</span></a>
+      <a class="nav-item" href="#/" data-nav="list"><span class="long">Veröffentlichungen</span><span class="short">Liste</span></a>
+      <button class="nav-item" id="nav-help" data-help=""><span class="long">So funktioniert's</span><span class="short">Hilfe</span></button>
+      <a class="nav-item" href="#/ueber" data-nav="about"><span class="long">Über bundesdiff</span><span class="short">Über</span></a>
+      <button class="search-btn" id="search-open" aria-label="Suchen" aria-haspopup="dialog" aria-keyshortcuts="Control+K Meta+K /">
+        <svg class="magnifier" viewBox="0 0 16 16" aria-hidden="true"><circle cx="6.8" cy="6.8" r="4.3"/><path d="M10 10l3.8 3.8"/></svg>
+        <span class="long">Suchen …</span><kbd class="long">Strg K</kbd>
+      </button>
+      <button class="theme-switch" id="theme-toggle" role="switch" aria-checked="false" aria-label="Dunkle Ansicht">
+        <!-- NAV-11: a slider; sun and moon drawn in the page's colours (currentColor) -->
+        <span class="track" aria-hidden="true"><span class="knob">
+          <svg class="sun" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.6"/><path d="M8 1.6v1.8M8 12.6v1.8M1.6 8h1.8M12.6 8h1.8M3.47 3.47l1.27 1.27M11.26 11.26l1.27 1.27M3.47 12.53l1.27-1.27M11.26 4.74l1.27-1.27"/></svg>
+          <svg class="moon" viewBox="0 0 16 16"><path d="M7.68 2.41A5.6 5.6 0 1 0 13.50 9.45A4.6 4.6 0 0 1 7.68 2.41Z"/></svg>
+        </span></span>
+      </button>
+    </nav>
   </header>
 
-  <div class="layout">
-    <aside class="sidebar" aria-label="Veröffentlichungen">
-      <div class="sidebar-search">
-        <input type="search" id="search" placeholder="Thema suchen, z. B. Steuer, Rente …" autocomplete="off" aria-label="Veröffentlichungen durchsuchen">
-        <div class="filter-row">
-          <select id="type-filter" aria-label="Art der Veröffentlichung">
-            <option value="">Alle Arten</option>
-          </select>
-          <label class="toggle" title="Nur Veröffentlichungen, die bestehende Gesetze ändern"><input type="checkbox" id="only-amending"> nur Gesetzesänderungen</label>
-        </div>
-      </div>
-      <div id="list-count" class="list-count" aria-live="polite"></div>
-      <ol id="pub-list" class="pub-list"></ol>
-      <div id="data-date" class="data-date"></div>
-    </aside>
+  <!-- spec 004: on phones the navbar gives way to round buttons at the bottom (PTL-5, PTL-11) -->
+  <nav class="fab-bar" aria-label="Hauptnavigation">
+    <a class="fab" id="fab-back" href="#/" aria-label="Zurück zur Zeitleiste" hidden>
+      <svg viewBox="0 0 22 22" aria-hidden="true"><path d="M17.5 11H5M10 6l-5 5 5 5"/></svg>
+    </a>
+    <button class="fab" id="fab-menu" aria-label="Menü" aria-haspopup="dialog" aria-expanded="false" aria-controls="menu">
+      <svg viewBox="0 0 22 22" aria-hidden="true"><path d="M5 8.5h12M5 13.5h12"/></svg>
+    </button>
+    <span class="fab-gap"></span>
+    <button class="fab" id="fab-help" data-help="" aria-label="So funktioniert's" aria-haspopup="dialog">
+      <svg viewBox="0 0 22 22" aria-hidden="true"><path d="M7.2 7.6a3.8 3.8 0 1 1 5.9 3.2c-1.3.8-2.1 1.6-2.1 3.2v.6"/><circle class="dot" cx="11" cy="17.6" r="1"/></svg>
+    </button>
+    <button class="fab" id="fab-search" aria-label="Suchen" aria-haspopup="dialog" aria-keyshortcuts="Control+K Meta+K /">
+      <svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="9.4" cy="9.4" r="5.6"/><path d="M13.6 13.6l4.6 4.6"/></svg>
+    </button>
+  </nav>
 
-    <main id="main" class="main">
-      <section class="welcome">
-        <h1>Was ändert sich im Gesetz?</h1>
-        <p class="lead">
-          Neue Gesetze und Änderungen werden im <strong>Bundesgesetzblatt</strong> veröffentlicht – dem amtlichen
-          „Mitteilungsblatt“ für Gesetze. Dort steht aber meist nicht der neue Text, sondern nur eine Anweisung wie:
-        </p>
-        <blockquote class="example">„In § 4 Absatz 1 wird die Angabe „zwei Monate“ durch die Angabe „fünf Wochen“ ersetzt.“</blockquote>
-        <p>
-          Um zu verstehen, was sich wirklich ändert, müsste man das Gesetz danebenlegen und die Änderung von Hand einarbeiten.
-          <strong>bundesdiff erledigt das automatisch</strong> und zeigt beide Fassungen nebeneinander:
-        </p>
-        <div class="example-diff" aria-hidden="true">
-          <div><span class="label">− Vorher</span><span>… können <del>zwei Monate</del> vor Inkrafttreten bezogen werden.</span></div>
-          <div><span class="label">+ Nachher</span><span>… können <ins>fünf Wochen</ins> vor Inkrafttreten bezogen werden.</span></div>
-        </div>
-        <ol class="steps">
-          <li><strong>Veröffentlichung auswählen</strong> – links in der Liste, die neuesten stehen oben. Mit der Suche finden Sie Themen wie „Steuer“ oder „Rente“.</li>
-          <li><strong>Vorher / Nachher lesen</strong> – <del>Durchgestrichenes</del> fällt weg, <ins>Grünes</ins> kommt neu hinzu.</li>
-          <li><strong>Nachvollziehen</strong> – „Wie ermittelt?“ erklärt bei jeder Vorschrift, woher die Texte stammen.</li>
-        </ol>
-        <p><button class="linklike" data-help="">Mehr erfahren: Wie funktioniert das und was bedeuten die Fachbegriffe?</button></p>
-        <p class="hint">Ohne Gewähr – rechtsverbindlich ist allein das amtliche Bundesgesetzblatt.</p>
-      </section>
-    </main>
-  </div>
+  <!-- spec 002: no sidebar; the start page is the timeline, rendered by app.js.
+       The contents bar of a publication is put right before <main>. -->
+  <main id="main" class="main" tabindex="-1"></main>
 
   <dialog id="dialog" aria-labelledby="dialog-title">
     <div class="dialog-head">
       <h2 id="dialog-title"></h2>
-      <button id="dialog-close" aria-label="Schließen">✕</button>
+      <button id="dialog-close" class="close-x" aria-label="Schließen"><svg class="x" viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/></svg></button>
     </div>
-    <div id="dialog-body" class="dialog-body"></div>
+    <div id="dialog-body" class="dialog-body" tabindex="0"></div>
   </dialog>
+
+  <dialog id="search-dialog" class="search-dialog" aria-label="Suchen">
+    <div class="search-head">
+      <svg class="magnifier" viewBox="0 0 16 16" aria-hidden="true"><circle cx="6.8" cy="6.8" r="4.3"/><path d="M10 10l3.8 3.8"/></svg>
+      <input id="search-input" type="search" role="combobox" aria-expanded="false" aria-controls="search-results"
+             aria-autocomplete="list" autocomplete="off" spellcheck="false"
+             aria-label="Gesetze und Veröffentlichungen durchsuchen" placeholder="Suchbegriff …">
+      <button id="search-close" class="close-x" aria-label="Schließen"><svg class="x" viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/></svg></button>
+    </div>
+    <p id="search-status" class="search-status" role="status"></p>
+    <div id="search-results" class="search-results" role="listbox" aria-label="Treffer"></div>
+    <p class="search-foot"><button id="search-history" class="linklike" hidden>Verlauf löschen</button></p>
+  </dialog>
+
+  <!-- the menu of the phone layout (PTL-6) -->
+  <dialog id="menu" class="menu" aria-label="Menü">
+    <div class="menu-head">
+      <a class="menu-brand" href="#/" aria-label="bundesdiff – Startseite"><span class="brand-mark" aria-hidden="true">§</span><span class="menu-brand-text">bundesdiff</span></a>
+      <button id="menu-close" class="close-x" aria-label="Schließen"><svg class="x" viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/></svg></button>
+    </div>
+    <ul class="menu-list">
+      <li><a href="#/" data-nav="list">Veröffentlichungen</a></li>
+      <li><a href="#/ueber" data-nav="about">Über bundesdiff</a></li>
+    </ul>
+    <div class="menu-theme">
+      <span id="menu-theme-label">Dunkle Ansicht</span>
+      <button class="theme-switch" id="theme-toggle-menu" role="switch" aria-checked="false" aria-labelledby="menu-theme-label">
+        <span class="track" aria-hidden="true"><span class="knob">
+          <svg class="sun" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.6"/><path d="M8 1.6v1.8M8 12.6v1.8M1.6 8h1.8M12.6 8h1.8M3.47 3.47l1.27 1.27M11.26 11.26l1.27 1.27M3.47 12.53l1.27-1.27M11.26 4.74l1.27-1.27"/></svg>
+          <svg class="moon" viewBox="0 0 16 16"><path d="M7.68 2.41A5.6 5.6 0 1 0 13.50 9.45A4.6 4.6 0 0 1 7.68 2.41Z"/></svg>
+        </span></span>
+      </button>
+    </div>
+  </dialog>
+
+  <template id="tpl-intro">
+    <section class="welcome tl-intro">
+      <p class="masthead-name">bundesdiff</p>
+      <h1>Was ändert sich im Gesetz?</h1>
+      <p class="lead">
+        Neue Gesetze und Änderungen erscheinen im <strong>Bundesgesetzblatt</strong>. Dort steht meist nur eine
+        Anweisung wie „In § 4 wird „zwei Monate“ durch „fünf Wochen“ ersetzt“. bundesdiff arbeitet die Änderung
+        in das Gesetz ein und zeigt <del class="sample">vorher</del> und <ins class="sample">nachher</ins> nebeneinander.
+      </p>
+      <p class="tl-help"><button class="linklike" data-help="">So funktioniert's – und was die Fachbegriffe bedeuten</button></p>
+    </section>
+  </template>
 
   <template id="tpl-help">
     <section id="help-how">
@@ -94,7 +124,7 @@
             <li><span class="badge consolidated">alter Text rekonstruiert</span> Schon enthalten: Der aktuelle Text ist „Nachher“, der alte Text wird zurückgerechnet – notfalls mithilfe einer archivierten älteren Fassung (Internet Archive).</li>
           </ul>
         </li>
-        <li><strong>Vergleichen.</strong> Beide Fassungen werden Abschnitt für Abschnitt und Wort für Wort verglichen und farbig markiert.</li>
+        <li><strong>Vergleichen.</strong> Beide Fassungen werden Abschnitt für Abschnitt und Wort für Wort verglichen. Was wegfällt, ist durchgestrichen; was neu hinzukommt, ist unterstrichen.</li>
       </ol>
     </section>
     <section id="help-status">
@@ -104,8 +134,8 @@
         <div><dt><span class="badge consolidated">alter Text rekonstruiert</span></dt><dd>Das Gesetz im Internet ist schon aktualisiert; bundesdiff zeigt zusätzlich, wie es vorher lautete.</dd></div>
         <div><dt><span class="badge failed">nicht anwendbar</span></dt><dd>Die Anweisung passte nicht zum Gesetzestext (z. B. ungewöhnliche Formulierung). Sie ist nur im Wortlaut zu sehen.</dd></div>
         <div><dt><span class="badge unsupported">nicht dargestellt</span></dt><dd>Änderungen an Inhaltsverzeichnissen, Anlagen und Tabellen werden nicht gegenübergestellt.</dd></div>
-        <div><dt><del>durchgestrichen</del></dt><dd>Text, der wegfällt.</dd></div>
-        <div><dt><ins>grün hinterlegt</ins></dt><dd>Text, der neu hinzukommt.</dd></div>
+        <div><dt><del class="sample">durchgestrichen</del></dt><dd>Text, der wegfällt.</dd></div>
+        <div><dt><ins class="sample">unterstrichen</ins></dt><dd>Text, der neu hinzukommt.</dd></div>
       </dl>
     </section>
     <section id="help-terms">
@@ -125,6 +155,41 @@
     <section id="help-sources">
       <h3>Quellen und Grenzen</h3>
       <p>Daten stammen von recht.bund.de (Bundesgesetzblatt), dem Rechtsinformationsportal des Bundes (testphase.rechtsinformationen.bund.de), gesetze-im-internet.de und dem Internet Archive (archive.org). Alles wird automatisch ausgewertet und kann Fehler enthalten. Rechtsverbindlich ist allein das amtliche Bundesgesetzblatt.</p>
+    </section>
+  </template>
+
+  <template id="tpl-about">
+    <section class="welcome about">
+      <h1>Über bundesdiff</h1>
+      <h2>Wozu gibt es bundesdiff?</h2>
+      <p>
+        Wenn ein Gesetz geändert wird, steht im Bundesgesetzblatt meist nicht der neue Text, sondern nur eine Anweisung,
+        <em>wie</em> der alte Text zu ändern ist. bundesdiff arbeitet diese Anweisungen ein und zeigt den bisherigen und
+        den neuen Text nebeneinander – damit alle nachvollziehen können, was sich ändert, auch ohne juristische Ausbildung.
+      </p>
+      <h2>Ohne Gewähr</h2>
+      <p>
+        bundesdiff ist kein amtliches Angebot und keine Rechtsberatung. Alles wird automatisch ausgewertet und kann Fehler
+        enthalten. Rechtsverbindlich ist allein das amtliche Bundesgesetzblatt.
+      </p>
+      <h2>Woher kommen die Daten?</h2>
+      <ul>
+        <li><a href="https://www.recht.bund.de" target="_blank" rel="noopener">recht.bund.de</a> – die amtliche Plattform des Bundesgesetzblatts. Von dort stammen die Veröffentlichungen.</li>
+        <li><a href="https://testphase.rechtsinformationen.bund.de" target="_blank" rel="noopener">Rechtsinformationsportal des Bundes</a> und <a href="https://www.gesetze-im-internet.de" target="_blank" rel="noopener">gesetze-im-internet.de</a> – der aktuelle Text der geänderten Gesetze.</li>
+        <li><a href="https://archive.org" target="_blank" rel="noopener">Internet Archive</a> – ältere Fassungen, wenn der bisherige Text anders nicht zu bekommen ist.</li>
+      </ul>
+      <h2>Darf man das?</h2>
+      <p>
+        Ja. Gesetze, Verordnungen und amtliche Bekanntmachungen sind „amtliche Werke“ und nicht urheberrechtlich geschützt
+        (§ 5 Urheberrechtsgesetz). Das Bundesgesetzblatt darf weiterverwendet werden (§ 2 Absatz 3
+        Verkündungs- und Bekanntmachungsgesetz, § 7 Datennutzungsgesetz). gesetze-im-internet.de und das
+        Rechtsinformationsportal erlauben ausdrücklich, ihre Daten automatisch weiterzuverarbeiten.
+      </p>
+      <h2>Ihre Daten</h2>
+      <p>
+        bundesdiff setzt keine Cookies, verwendet keine Analyse- oder Werbedienste und lädt nichts von fremden Servern.
+        Nur Ihre Einstellungen – helle oder dunkle Ansicht, Darstellung der Änderungen – merkt sich Ihr Browser auf Ihrem Gerät.
+      </p>
     </section>
   </template>
 
