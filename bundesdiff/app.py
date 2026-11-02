@@ -20,7 +20,7 @@ from .analysis import analyze
 log = logging.getLogger("bundesdiff")
 STATIC = Path(__file__).parent / "static"
 RESULT_TTL = 6 * 3600  # analyses are recomputed after this many seconds
-WATCH_MINUTES = float(os.environ.get("BUNDESDIFF_WATCH_MINUTES", "60"))
+WATCH_MINUTES = float(os.environ.get("BUNDESDIFF_WATCH_MINUTES", "1440"))  # once a day (UPD-2)
 
 _locks: dict[str, threading.Lock] = {}
 _locks_guard = threading.Lock()

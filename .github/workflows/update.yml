@@ -1,4 +1,4 @@
-# Analyzes new Bundesgesetzblatt publications every hour and builds the static site.
+# Analyzes new Bundesgesetzblatt publications once a day and builds the static site (spec 003).
 #
 # Data layout:
 #   branch "data"      results/ and laws/ of the last 365 days (+ newest version of every law);
@@ -16,7 +16,7 @@ name: Update data
 
 on:
   schedule:
-    - cron: "23 * * * *"
+    - cron: "23 19 * * *"  # 20:23 / 21:23 German time, after the day's issues
   workflow_dispatch:
     inputs:
       max_new:
@@ -150,9 +150,22 @@ jobs:
     permissions:
       pages: write
       id-token: write
+      actions: read
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
+      # Publish only code whose browser tests (tests.yml: Chromium, Firefox, WebKit) passed.
+      # The tests run on every push; running them here as well would cost minutes for nothing.
+      - name: Check that the tests passed for this version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          passed=$(gh api "repos/${{ github.repository }}/actions/workflows/tests.yml/runs?head_sha=${{ github.sha }}&status=success" --jq .total_count)
+          if [ "$passed" = "0" ]; then
+            echo "::error::The tests have not passed for ${{ github.sha }} – site not published."
+            exit 1
+          fi
+
       - id: deploy
         uses: actions/deploy-pages@v4
