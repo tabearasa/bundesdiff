@@ -1,6 +1,6 @@
 # bundesdiff
 
-[![Tests](../../actions/workflows/tests.yml/badge.svg)](../../actions/workflows/tests.yml)
+[![Tests](https://github.com/tabearasa/bundesdiff/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/tabearasa/bundesdiff/actions/workflows/tests.yml)
 [![License: MIT](.github/badges/license.svg)](LICENSE)
 
 **Goal:** everyone, not only lawyers, can see what a new federal law changes.
