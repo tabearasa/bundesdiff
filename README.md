@@ -54,10 +54,6 @@ GitHub Actions runs them in Chromium, Firefox and WebKit on every push.
    to get the old wording.
 5. Show old and new wording side by side, with the changed words marked.
 
-A GitHub Actions workflow does this once a day and keeps the results on the `data` branch;
-data older than a year goes into monthly release archives. The site is not published yet.
-Details for maintainers are in [AGENTS.md](AGENTS.md).
-
 ## Limitations
 
 * Tables of contents, annexes, tables and items like "Nummer 7.2.1" are listed but not applied.

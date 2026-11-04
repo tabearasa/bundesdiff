@@ -7,10 +7,8 @@
 #                      historie-bis-YYYY-MM.bundle with the full git history before squashing
 #   artifact "site"    the static website (download it, or deploy to Pages – see below)
 #
-# GitHub Pages is off by default: on Free plans Pages does not work for private
-# repositories, and on paid plans the site would be publicly reachable.
-# To enable it later, set the repository variable DEPLOY_PAGES to "true" and
-# choose "GitHub Actions" as the Pages source.
+# GitHub Pages: every run publishes the site when the repository variable DEPLOY_PAGES is
+# "true" and "GitHub Actions" is the Pages source. Set DEPLOY_PAGES to anything else to stop.
 
 name: Update data
 

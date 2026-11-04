@@ -163,10 +163,8 @@ versions instead of archive snapshots.
    Restore with `git fetch historie-bis-2026-10.bundle data:data-alt`.
 6. Uploads the static site as workflow artifact `site` (kept 7 days).
 
-**GitHub Pages** is off: on the Free plan it is unavailable for private repositories, and on
-paid plans the site would be public even for a private repository. To publish, set the
-repository variable `DEPLOY_PAGES=true` and choose *GitHub Actions* as the Pages source; it
-deploys only when `tests.yml` passed for the commit. Before going public, add an Impressum
-(operator's name and address) to the about page (`tpl-about` in
-`bundesdiff/static/index.html`). The frontend only reads relative `data/…` files, so any static
-host works.
+**GitHub Pages**: the site is published by the `deploy-pages` job of every update run, while
+the repository variable `DEPLOY_PAGES` is `true` and *GitHub Actions* is the Pages source. It
+deploys only when `tests.yml` passed for the commit. The site has no Impressum: the owner
+judges it a private, non-commercial project (decision 2026-11-04). The frontend only reads
+relative `data/…` files, so any static host works too.

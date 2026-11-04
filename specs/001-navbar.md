@@ -100,8 +100,7 @@ sticky, so they never cover more than a third of the screen.
 * A menu button ("hamburger") that hides entries: the navbar has few enough entries to show
   them all, and hidden menus are harder to find for many readers.
 * Search in the navbar (stays above the list).
-* Impressum: the operator's name and address must be added to the about page before the site
-  is published (see "GitHub Pages" in the README); bundesdiff is not public yet.
+* Impressum: the site is a private, non-commercial project and has none (owner, 2026-11-04).
 
 ## Decisions
 
