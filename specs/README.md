@@ -17,7 +17,7 @@ the spec, and the spec stays as the documentation of why the feature looks the w
    ```
    The tests fail at this point – that is expected.
 4. **Implement** until the `bug-hunter` agent reports that these and all other tests pass in
-   Chromium and Firefox and finds nothing in the screenshots (see `CLAUDE.md`). The tests are
+   Chromium and Firefox and finds nothing in the screenshots (see `AGENTS.md`). The tests are
    always run by that agent, never by the one writing the code.
 5. **Done.** `Status: done`. If the implementation had to deviate, the spec is changed in the
    same change set, never left outdated.
