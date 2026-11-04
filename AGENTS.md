@@ -153,7 +153,12 @@ versions instead of archive snapshots.
 1. Checks out the `data` branch (created on the first run) into `store/`.
 2. `bundesdiff export`: analyzes up to 50 new publications from the last 365 days, newest
    first. For the first backfill (about 400 issues) run it by hand with `max_new` = 500.
-   Failed analyses are retried after 24 hours.
+   Failed analyses are retried after 24 hours. Every request is tried 3 times on a timeout
+   or server error; the list of publications 4 times, 1, 5 and 15 minutes apart. Each
+   successful fetch saves the list as `publications-1.json` in the store. If recht.bund.de
+   stays unreachable, the site is built from that saved list, nothing new is analysed, the
+   start page says how old the list is (after 36 hours), and the last job
+   `source-unreachable` marks the run as failed after publishing (spec 014).
 3. `bundesdiff prune`: moves everything older than a year into
    `bundesdiff-archiv-YYYY-MM-DD.tar.gz`, attached to the monthly GitHub Release
    `archiv-YYYY-MM`. The newest version of each law stays, as it is still the "before" text.

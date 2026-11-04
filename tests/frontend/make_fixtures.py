@@ -49,7 +49,8 @@ def main() -> None:
     if missing:
         raise SystemExit(f"not among the newest {LIST_LENGTH} publications: {sorted(missing)}")
     write(OUT / "publications-1.json", listing)
-    write(OUT / "meta.json", {"generated": "2026-10-27T06:23", "since": "2025-10-27"})
+    write(OUT / "meta.json", {"generated": "2026-10-30T06:41", "listFetched": "2026-10-30T06:23",
+                                 "since": "2025-10-27"})
     print(f"{len(listing)} publications, {len(ANALYZED)} analyses → {OUT}")
 
 

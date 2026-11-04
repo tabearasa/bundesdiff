@@ -364,3 +364,106 @@ def test_dates_are_written_one_way_and_relative_days_stay_together(app, page):
 def test_not_yet_analyzed_says_data_is_updated_daily(app):
     page = app(PAGES["not-analyzed"])
     expect(page.locator(".error-box")).to_contain_text("einmal täglich")
+
+
+# ---------------------------------------------------------------- old data (spec 014)
+
+OLD_DATA_NOTICE = ("Die Liste der Veröffentlichungen ist vom 30. Oktober 2026. Neuere Veröffentlichungen "
+                   "fehlen hier vielleicht noch, weil recht.bund.de zuletzt nicht erreichbar war. "
+                   "Die amtlichen Texte finden Sie immer auf recht.bund.de.")
+
+
+@pytest.mark.spec("RES-4")
+def test_data_date_is_when_the_list_was_fetched(app):
+    """meta.json: built 06:41, list fetched 06:23 UTC – the reader is told the time of the list,
+    in German time (07:23 Uhr in winter)."""
+    page = app()
+    expect(page.locator("#data-date")).to_contain_text("Datenstand: 30.10.2026, 07:23 Uhr")
+
+
+@pytest.mark.spec("RES-5")
+def test_no_notice_while_the_list_is_fresh(app):
+    page = app()
+    expect(page.locator(".timeline")).to_be_visible()
+    expect(page.locator(".old-data")).to_have_count(0)
+
+
+@pytest.mark.spec("RES-5")
+def test_notice_when_the_list_is_older_than_36_hours(app):
+    page = app(PAGES["old-data"])
+    notice = page.locator(".old-data")
+    expect(notice).to_have_text(OLD_DATA_NOTICE)
+    expect(notice.get_by_role("link", name="recht.bund.de")).to_have_attribute(
+        "href", "https://www.recht.bund.de/")
+    # above the timeline
+    assert notice.bounding_box()["y"] < page.locator(".timeline").bounding_box()["y"]
+
+
+@pytest.mark.spec("RES-5")
+@pytest.mark.parametrize(("now", "shown"), [("2026-10-31T17:23:00Z", False),   # 35 hours later
+                                             ("2026-10-31T19:23:00Z", True)])  # 37 hours later
+def test_notice_appears_after_36_hours(page, base_url, problems, now, shown):
+    page.clock.set_fixed_time(now)
+    page.goto(base_url + "index.html")
+    wait_rendered(page, "")
+    expect(page.locator("#data-date")).to_contain_text("07:23 Uhr")  # meta.json has been read
+    expect(page.locator(".old-data")).to_have_count(1 if shown else 0)
+    assert not problems, "\n".join(problems)
+
+
+@pytest.mark.spec("RES-5")
+def test_notice_stays_when_filtering_and_switching_views(app):
+    page = app(PAGES["old-data"])
+    page.locator("#type-filter").select_option("Verordnung")
+    expect(page.locator(".old-data")).to_have_count(1)
+    page.get_by_role("button", name="Was ändert sich demnächst?").click()
+    expect(page.locator(".old-data")).to_have_count(1)
+    expect(page.locator(".old-data")).to_have_text(OLD_DATA_NOTICE)
+
+
+@pytest.mark.spec("RES-5", "RES-4")
+def test_notice_date_is_the_day_in_germany(app, page):
+    """Fetched at 23:30 UTC on 29 October: in Germany that is already 30 October, 00:30 –
+    the notice and the "Datenstand" line name the same day."""
+    page.route("**/data/meta.json", lambda route: route.fulfill(json={
+        "generated": "2026-10-29T23:41", "listFetched": "2026-10-29T23:30", "since": "2025-10-27"}))
+    page = app(PAGES["old-data"])
+    expect(page.locator(".old-data")).to_contain_text("ist vom 30. Oktober 2026.")
+    expect(page.locator("#data-date")).to_contain_text("Datenstand: 30.10.2026, 00:30 Uhr")
+
+
+@pytest.mark.spec("RES-4")
+@pytest.mark.parametrize("damaged", ["kaputt", "2026-02-30T10:00", "2026-10-30T24:00", "2026-10-30T06:60",
+                                     "2026-10-30T06:23+25:99"])
+def test_an_unreadable_fetch_time_is_not_shown(app, page, damaged):
+    """A damaged listFetched, also a day or hour that does not exist: the build time is used
+    instead, never the broken or a shifted time."""
+    page.route("**/data/meta.json", lambda route: route.fulfill(json={
+        "generated": "2026-10-30T06:41", "listFetched": damaged, "since": "2025-10-27"}))
+    page = app()
+    expect(page.locator("#data-date")).to_contain_text("Datenstand: 30.10.2026, 07:41 Uhr")
+    expect(page.locator("#data-date")).not_to_contain_text(damaged)
+
+
+@pytest.mark.spec("RES-4")
+@pytest.mark.parametrize("since", [None, "2025-13-45", "0000-00-00", "gestern"])
+def test_a_missing_or_unreadable_start_date_is_left_out(app, page, since):
+    meta = {"generated": "2026-10-30T06:41", "listFetched": "2026-10-30T06:23"}
+    if since is not None:
+        meta["since"] = since
+    page.route("**/data/meta.json", lambda route: route.fulfill(json=meta))
+    page = app()
+    line = page.locator("#data-date")
+    expect(line).to_have_text("Datenstand: 30.10.2026, 07:23\u00a0Uhr\u00a0· Aktualisierung einmal\u00a0täglich")
+
+
+@pytest.mark.spec("RES-A1")
+def test_notice_is_plain_text_with_a_border(app):
+    page = app(PAGES["old-data"])
+    notice = page.locator(".old-data")
+    assert notice.evaluate("n => n.tagName") == "P"
+    assert notice.get_attribute("role") is None and notice.get_attribute("aria-live") is None
+    assert notice.evaluate("n => n.closest('[aria-live], [role=status], [role=alert]')") is None
+    widths = notice.evaluate("n => { const s = getComputedStyle(n); return [s.borderTopWidth, "
+                             "s.borderRightWidth, s.borderBottomWidth, s.borderLeftWidth] }")
+    assert all(float(w.removesuffix("px")) >= 1 for w in widths), widths

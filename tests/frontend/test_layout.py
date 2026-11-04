@@ -42,7 +42,7 @@ def settle(page) -> None:
     page.wait_for_function("document.getAnimations().every(a => a.playState !== 'running')")
 
 
-@pytest.mark.spec("A11Y-1", "A11Y-4", "A11Y-5", "A11Y-11")
+@pytest.mark.spec("A11Y-1", "A11Y-4", "A11Y-5", "A11Y-11", "RES-A1")
 @pytest.mark.parametrize("theme", THEMES)
 @pytest.mark.parametrize("viewport", VIEWPORTS)
 @pytest.mark.parametrize("kind", PAGES)
@@ -68,15 +68,95 @@ def test_layout_with_everything_expanded(app, page, viewport):
     assert not issues, "\n".join(issues)
 
 
+@pytest.mark.spec("RES-A1", "A11Y-12")
+@pytest.mark.parametrize("viewport", VIEWPORTS)
+def test_old_data_notice_text_lines_up_with_intro_and_timeline(app, page, viewport):
+    """Intro, notice and timeline card: one text edge on the left and right, like one column of print."""
+    page.set_viewport_size(VIEWPORTS[viewport])
+    app(PAGES["old-data"])
+    edges = page.evaluate("""() => [".welcome", ".old-data", ".timeline-page"].map((sel) => {
+      const n = document.querySelector(sel), r = n.getBoundingClientRect(), s = getComputedStyle(n);
+      return [r.left + parseFloat(s.borderLeftWidth) + parseFloat(s.paddingLeft),
+              r.right - parseFloat(s.borderRightWidth) - parseFloat(s.paddingRight)];
+    })""")
+    lefts, rights = {round(left) for left, _ in edges}, {round(right) for _, right in edges}
+    assert len(lefts) == 1 and len(rights) == 1, edges
+
+
+@pytest.mark.spec("RES-5", "A11Y-5")
+@pytest.mark.parametrize("spacing", [False, True])
+def test_old_data_notice_keeps_the_date_and_short_words_whole(app, page, spacing):
+    """„30. Oktober 2026“ is never torn apart (not after „30.“, not „Ok-tober“), and no word
+    of five letters or less is hyphenated („im-mer“)."""
+    app(PAGES["old-data"])
+    if spacing:
+        page.add_style_tag(content=TEXT_SPACING)
+    torn = []
+    for width in range(320, 1001, 4):
+        page.set_viewport_size({"width": width, "height": 800})
+        torn += [f"{word} at {width} px" for word in page.locator(".old-data").evaluate("""n => {
+          const lines = (range) => new Set([...range.getClientRects()].map((r) => Math.round(r.top))).size;
+          const date = document.createRange();
+          date.selectNodeContents(n.querySelector(".keep"));
+          const out = lines(date) > 1 ? [date.toString()] : [];
+          const walker = document.createTreeWalker(n, NodeFilter.SHOW_TEXT);
+          for (let t; (t = walker.nextNode());) {
+            for (const m of t.data.matchAll(/(?<!\\p{L})\\p{L}{2,5}(?!\\p{L})/gu)) {
+              const r = document.createRange();
+              r.setStart(t, m.index); r.setEnd(t, m.index + m[0].length);
+              if (lines(r) > 1) out.push(m[0]);
+            }
+          }
+          return out;
+        }""")]
+    assert not torn, torn
+
+
+@pytest.mark.spec("RES-4", "A11Y-5")
+@pytest.mark.parametrize("spacing", [False, True])
+def test_data_date_line_keeps_its_parts_together(app, page, spacing):
+    """„07:23 Uhr“ and „seit 27.10.2025“ stay together, no line starts with the separator „·“,
+    and the last line is never a single word or syllable („täg-/lich“)."""
+    app()
+    if spacing:
+        page.add_style_tag(content=TEXT_SPACING)
+    page.locator("#data-date").filter(has_text="Uhr").wait_for()
+    torn = []
+    for width in range(320, 1001, 2):
+        page.set_viewport_size({"width": width, "height": 800})
+        torn += [f"{part} at {width} px" for part in page.locator("#data-date").evaluate("""n => {
+          const text = n.firstChild, out = [];
+          const tops = (from, to) => {
+            const r = document.createRange();
+            r.setStart(text, from); r.setEnd(text, to);
+            return new Set([...r.getClientRects()].filter((b) => b.width > 0).map((b) => Math.round(b.top))).size;
+          };
+          for (const m of text.data.matchAll(/\\d\\d:\\d\\d\\s+Uhr|seit\\s+\\S+/gu)) {
+            if (tops(m.index, m.index + m[0].length) > 1) out.push(m[0]);
+          }
+          for (const m of text.data.matchAll(/\\S\\s+·/gu)) {  // the word before „·“ and „·“ on one line
+            if (tops(m.index, m.index + m[0].length) > 1) out.push(m[0]);
+          }
+          // the last line holds at least the last two words: the piece after the last ordinary
+          // space has two words and stays on one line
+          const tail = text.data.slice(text.data.lastIndexOf(" ") + 1);
+          if (!/\\S\\s\\S/u.test(tail) || tops(text.data.length - tail.length, text.data.length) > 1) {
+            out.push("last line: " + tail);
+          }
+          return out;
+        }""")]
+    assert not torn, torn
+
+
 # WCAG 1.4.12: readers may widen spacing with their own style sheet; nothing may get cut off
 TEXT_SPACING = """* { line-height: 1.5 !important; letter-spacing: .12em !important;
                      word-spacing: .16em !important; }
                  p { margin-bottom: 2em !important; }"""
 
 
-@pytest.mark.spec("A11Y-2")
+@pytest.mark.spec("A11Y-2", "RES-A1")
 @pytest.mark.parametrize("zoom", [200, 400])
-@pytest.mark.parametrize("kind", ["start", "amendment"])
+@pytest.mark.parametrize("kind", ["start", "amendment", "old-data"])
 def test_layout_when_zoomed(app, page, kind, zoom):
     """Browser zoom on a 1280 × 800 desktop: 200 % (WCAG 1.4.4) and 400 % (WCAG 1.4.10).
 
@@ -92,9 +172,9 @@ def test_layout_when_zoomed(app, page, kind, zoom):
 ZOOM_400 = {"width": 320, "height": 200}  # 1280×800 at 400 %: the navbar instead of the round buttons
 
 
-@pytest.mark.spec("A11Y-3", "A11Y-2")
+@pytest.mark.spec("A11Y-3", "A11Y-2", "RES-A1")
 @pytest.mark.parametrize("viewport", ["desktop", "small", "zoom-400"])
-@pytest.mark.parametrize("kind", ["start", "amendment"])
+@pytest.mark.parametrize("kind", ["start", "amendment", "old-data"])
 def test_layout_with_wide_text_spacing(app, page, kind, viewport):
     page.set_viewport_size(ZOOM_400 if viewport == "zoom-400" else VIEWPORTS[viewport])
     app(PAGES[kind])
@@ -176,7 +256,7 @@ def test_no_emoji_on_screen(app, page, kind):
     assert not PICTOGRAPHS.findall(text)
 
 
-@pytest.mark.spec("A11Y-6")
+@pytest.mark.spec("A11Y-6", "RES-A1")
 @pytest.mark.parametrize("theme", THEMES)
 @pytest.mark.parametrize("kind", PAGES)
 def test_accessibility(app, page, kind, theme):

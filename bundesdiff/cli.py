@@ -33,8 +33,14 @@ def main() -> None:
 
     if args.cmd == "export":
         from .export import export
+        from .sources import Unreachable
 
-        print(json.dumps(export(args.site, args.days, args.max_new, args.retry_hours)))
+        try:
+            totals = export(args.site, args.days, args.max_new, args.retry_hours)
+        except Unreachable as e:  # RES-6: one line, no traceback
+            parser.exit(1, f"bundesdiff: {e.url} nicht erreichbar ({e.reason}), "
+                           "und es gibt keine lesbare gespeicherte Liste der Veröffentlichungen.\n")
+        print(json.dumps(totals))
     elif args.cmd == "prune":
         from .store import prune
 

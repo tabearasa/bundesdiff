@@ -6,6 +6,7 @@ branch) and archived. Location: ``BUNDESDIFF_DATA`` (default: the cache dir).
 
 from __future__ import annotations
 
+import dataclasses
 import datetime as dt
 import gzip
 import hashlib
@@ -38,6 +39,55 @@ def save_result(pub_id: str, result: dict) -> None:
     path = result_path(pub_id)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(result, ensure_ascii=False, separators=(",", ":")))
+
+
+# --------------------------------------------------------------------------
+# The list of publications, as last fetched from recht.bund.de (RES-2)
+
+
+def listing_path(teil: str) -> Path:
+    return DATA_DIR / f"publications-{teil}.json"
+
+
+def save_listing(teil: str, publications: list, fetched: str) -> None:
+    """``publications``: sources.Publication objects; ``fetched``: UTC, "YYYY-MM-DDTHH:MM"."""
+    path = listing_path(teil)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    rows = [dataclasses.asdict(p) for p in publications]
+    path.write_text(json.dumps({"fetched": fetched, "publications": rows}, ensure_ascii=False, indent=0))
+
+
+def load_listing(teil: str):
+    """(publications, fetched) of the last successful fetch, or None if there is none."""
+    from .sources import Publication  # sources imports this module
+
+    path = listing_path(teil)
+    try:
+        data = json.loads(path.read_text())
+        pubs = [Publication(**row) for row in data["publications"]]
+        fetched = data["fetched"]
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    # a damaged file: better no list than a wrong one
+    if not pubs or not _valid_time(fetched, "%Y-%m-%dT%H:%M"):
+        return None
+    for p in pubs:
+        if not all(isinstance(getattr(p, f.name), str) for f in dataclasses.fields(p) if f.name != "year"):
+            return None
+        if (p.teil != teil or type(p.year) is not int or not re.fullmatch(r"[0-9a-z]+", p.number)
+                or not _valid_time(p.date, "%Y-%m-%d")):
+            return None
+    return pubs, fetched
+
+
+def _valid_time(text, form: str) -> bool:
+    """``text`` has exactly the form (ASCII digits only) and names a real day and time."""
+    if not isinstance(text, str) or not text.isascii():
+        return False
+    try:
+        return dt.datetime.strptime(text, form).strftime(form) == text
+    except ValueError:
+        return False
 
 
 # --------------------------------------------------------------------------

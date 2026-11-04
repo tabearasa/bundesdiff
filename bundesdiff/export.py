@@ -13,9 +13,13 @@ from __future__ import annotations
 import datetime as dt
 import json
 import logging
+import re
 import shutil
 import time
 from pathlib import Path
+from xml.etree import ElementTree as ET
+
+import httpx
 
 from . import listing as list_entry
 from . import sources, store
@@ -23,6 +27,19 @@ from .analysis import analyze
 
 log = logging.getLogger(__name__)
 STATIC = Path(__file__).parent / "static"
+LIST_WAITS = (60, 300, 900)  # seconds between the 4 tries to fetch the list (RES-1)
+_sleep = time.sleep
+
+
+def is_iso_date(text: str) -> bool:
+    """YYYY-MM-DD in ASCII digits, and a day that exists."""
+    if not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", text or ""):
+        return False
+    try:
+        dt.date.fromisoformat(text)
+    except ValueError:
+        return False
+    return True
 
 
 def _write_json(path: Path, data) -> None:
@@ -54,18 +71,58 @@ def update_results(pubs: list[sources.Publication], max_new: int, retry_hours: f
     return stats
 
 
+def fetch_listing(teil: str) -> list[sources.Publication]:
+    """The list of publications from recht.bund.de, tried 4 times (RES-1).
+
+    Raises sources.Unreachable when it cannot be fetched or read.
+    """
+    url = sources.FEEDS[teil]
+    for wait in (*LIST_WAITS, None):
+        try:
+            pubs = sources.list_publications(teil)
+        except (ET.ParseError, LookupError, ValueError) as e:  # an answer, but not a list: trying again will not help
+            raise sources.Unreachable(url, f"Antwort nicht lesbar ({e})") from e
+        except httpx.HTTPError as e:
+            if wait is None or not sources.connection_problem(e):
+                raise sources.Unreachable(url, sources.reason(e)) from e
+            log.warning("list of publications: %s – next try in %d min", sources.reason(e), wait // 60)
+            _sleep(wait)
+            continue
+        dated = [p for p in pubs if is_iso_date(p.date)]
+        if len(dated) < len(pubs):
+            log.warning("list of publications: %d without a date of the form YYYY-MM-DD left out",
+                        len(pubs) - len(dated))
+        if not dated:  # the real feed always lists hundreds: this is a maintenance page or similar
+            raise sources.Unreachable(url, "Antwort enthält keine Veröffentlichungen")
+        return dated
+    raise AssertionError("unreachable")
+
+
 def export(site: Path, days: int = 365, max_new: int = 50, retry_hours: float = 24) -> dict:
     cutoff = (dt.date.today() - dt.timedelta(days=days)).isoformat()
     if site.exists():
         shutil.rmtree(site)
     (site / "data").mkdir(parents=True)
 
-    totals: dict = {}
+    totals: dict = {"analyzed": 0, "failed": 0, "pending": 0}
+    from_saved, list_fetched = False, ""
     for teil in sources.FEEDS:
-        pubs = [p for p in sources.list_publications(teil) if p.date >= cutoff]
-        for k, v in update_results(pubs, max_new - totals.get("analyzed", 0) - totals.get("failed", 0),
-                                   retry_hours).items():
-            totals[k] = totals.get(k, 0) + v
+        try:
+            feed = fetch_listing(teil)
+            fetched = dt.datetime.now(dt.UTC).strftime("%Y-%m-%dT%H:%M")
+            store.save_listing(teil, feed, fetched)
+        except sources.Unreachable as e:
+            saved = store.load_listing(teil)
+            if saved is None:
+                raise
+            # RES-3: the site as after the last successful run, nothing new is analysed
+            feed, fetched = saved
+            from_saved = True
+            log.error("%s – using the list saved at %s UTC", e, fetched)
+        pubs = [p for p in feed if p.date >= cutoff]
+        if not from_saved:
+            for k, v in update_results(pubs, max_new - totals["analyzed"] - totals["failed"], retry_hours).items():
+                totals[k] += v
         listing = []
         for p in pubs:
             result = store.load_result(p.id)
@@ -73,11 +130,12 @@ def export(site: Path, days: int = 365, max_new: int = 50, retry_hours: float = 
                 _write_json(site / "data" / teil / str(p.year) / f"{p.number}.json", result)
             listing.append(list_entry.entry(p, result))
         _write_json(site / "data" / f"publications-{teil}.json", listing)
+        list_fetched = min(list_fetched or fetched, fetched)
 
     _write_json(site / "data" / "meta.json", {"generated": dt.datetime.now(dt.UTC).isoformat(timespec="minutes"),
-                                              "since": cutoff})
+                                              "listFetched": list_fetched, "since": cutoff})
     build_frontend(site)
-    return totals
+    return {**totals, "fromSavedList": from_saved, "listFetched": list_fetched}
 
 
 def build_frontend(site: Path) -> None:

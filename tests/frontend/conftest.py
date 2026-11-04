@@ -22,6 +22,9 @@ from bundesdiff.export import build_frontend
 
 FIXTURES = Path(__file__).parent / "fixtures"
 NOW = "2026-10-30T10:00:00"  # the newest fixture publication is from this day
+# two days later: the list of publications (fetched 2026-10-30 06:23 UTC = 07:23 German time) is then more than
+# 36 hours old and the start page says so (RES-5)
+LATER = "2026-11-01T10:00:00"
 
 VIEWPORTS = {
     "desktop": {"width": 1440, "height": 900},
@@ -41,7 +44,11 @@ PAGES = {
     "announcement": "#/1/2026/315",
     "not-analyzed": "#/1/2026/322",
     "about": "#/ueber",
+    "old-data": "#/",  # the start page, opened at LATER (see NOW_FOR_ROUTE)
 }
+# routes opened at another time than NOW; "#/" is reserved for "old-data" – other tests open
+# the start page as "" (PAGES["start"])
+NOW_FOR_ROUTE = {PAGES["old-data"]: LATER}
 
 
 @pytest.fixture(scope="session")
@@ -85,10 +92,13 @@ def app(page: Page, base_url: str, problems: list[str]):
     page.set_default_timeout(10_000)
 
     def open_(route: str = "", theme: str | None = None) -> Page:
+        page.clock.set_fixed_time(NOW_FOR_ROUTE.get(route, NOW))
         if theme:
             page.add_init_script(f"localStorage.setItem('bundesdiff.theme', '{theme}')")
         page.goto(base_url + "index.html" + route)
         wait_rendered(page, route)
+        if route == PAGES["old-data"]:  # the notice comes with meta.json, after the timeline
+            page.locator(".old-data").wait_for()
         return page
 
     yield open_

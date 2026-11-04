@@ -220,6 +220,10 @@ function renderTimeline(keepFilters = false) {
     main.appendChild(el(`<div class="error-box"><strong>Die Liste der Veröffentlichungen konnte nicht geladen werden.</strong><br>${esc(state.listError)}<br>Bitte laden Sie die Seite später noch einmal.</div>`));
     return;
   }
+  if (!keepFilters || !shown) {
+    const notice = oldDataNotice();
+    if (notice) main.appendChild(notice);
+  }
   const months = [...new Set(pubs.map((p) => p.date.slice(0, 7)))];
   const section = el(`
     <section class="timeline-page" aria-label="Veröffentlichungen">
@@ -1159,10 +1163,55 @@ async function showDataDate() {
   if (!STATIC) return;
   try {
     const meta = await getJSON("data/meta.json");
-    state.dataDate = `Datenstand: ${formatDate(meta.generated)}, ${meta.generated.slice(11, 16)} UTC · Veröffentlichungen seit ${formatDate(meta.since)} · Aktualisierung einmal täglich`;
+    // when the list of publications was last fetched from recht.bund.de, not when the site was built
+    // (RES-4); an unreadable time is never shown: then the build time, or no time at all
+    const fetched = [meta.listFetched, meta.generated].map(utcTime).find(Number.isFinite);
+    state.listFetched = fetched ?? null;
+    // no-break spaces: "07:23 Uhr" and "seit 27.10.2025" stay together, "·" never starts a line
+    const parts = [fetched === undefined ? "Datenstand unbekannt"
+      : `Datenstand: ${germanDate(fetched)}, ${germanClock(fetched)}\u00a0Uhr`];
+    if (Number.isFinite(utcTime(`${meta.since}T00:00`))) parts.push(`Veröffentlichungen seit\u00a0${formatDate(meta.since)}`);
+    parts.push("Aktualisierung einmal\u00a0täglich"); // never „täglich“ alone on the last line
+    state.dataDate = parts.join("\u00a0· ");
     const line = $("#data-date");
     if (line) line.textContent = state.dataDate;
+    const timeline = $(".timeline-page");
+    if (timeline && !$(".old-data")) {
+      const notice = oldDataNotice();
+      if (notice) timeline.before(notice);
+    }
   } catch { /* optional */ }
+}
+
+const OLD_DATA_HOURS = 36; // one missed evening run and some slack (RES-5)
+const BERLIN = { timeZone: "Europe/Berlin" };
+
+/** "2026-10-30T06:23" (UTC, as bundesdiff writes it) → milliseconds; NaN if it is not such a time. */
+function utcTime(text) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?(Z|[+-]\d{2}:\d{2})?$/.exec(typeof text === "string" ? text : "");
+  if (!m) return NaN;
+  const [y, mo, d, h, mi, sec] = m.slice(1, 7).map((n) => +(n || 0));
+  // a day or hour that does not exist (30 February, 24:00) is unreadable, not rolled over
+  const t = new Date(Date.UTC(y, mo - 1, d, h, mi, sec));
+  if (t.getUTCFullYear() !== y || t.getUTCMonth() !== mo - 1 || t.getUTCDate() !== d
+      || t.getUTCHours() !== h || t.getUTCMinutes() !== mi || t.getUTCSeconds() !== sec) return NaN;
+  const zone = /^([+-])(\d{2}):(\d{2})$/.exec(m[7] || "");
+  if (zone && (+zone[2] > 23 || +zone[3] > 59)) return NaN; // "+25:99" is no time zone
+  return t.getTime() - (zone ? (zone[1] === "-" ? -1 : 1) * (+zone[2] * 60 + +zone[3]) * 60000 : 0);
+}
+
+// German time, so the notice and the "Datenstand" line name the same day (23:30 UTC is already the next day)
+const germanDay = (ms) => new Date(ms).toLocaleDateString("de-DE", { ...BERLIN, day: "numeric", month: "long", year: "numeric" });
+const germanDate = (ms) => new Date(ms).toLocaleDateString("de-DE", { ...BERLIN, day: "2-digit", month: "2-digit", year: "numeric" });
+const germanClock = (ms) => new Date(ms).toLocaleTimeString("de-DE", { ...BERLIN, hour: "2-digit", minute: "2-digit" });
+
+/** The notice above the timeline when the list of publications is old, or null (RES-5, RES-A1). */
+function oldDataNotice() {
+  if (state.listFetched === null || state.listFetched === undefined) return null;
+  if (!(Date.now() - state.listFetched > OLD_DATA_HOURS * 3600 * 1000)) return null;
+  return el(`<p class="old-data">Die Liste der Veröffentlichungen ist vom <span class="keep">${esc(germanDay(state.listFetched))}</span>.
+    Neuere Veröffentlichungen fehlen hier vielleicht noch, weil recht.bund.de zuletzt nicht erreichbar war.
+    Die amtlichen Texte finden Sie immer auf <a href="https://www.recht.bund.de/">recht.bund.de</a>.</p>`);
 }
 
 // ---------------------------------------------------------------- search (spec 002, SRCH-*)

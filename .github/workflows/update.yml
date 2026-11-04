@@ -32,6 +32,8 @@ jobs:
   update:
     runs-on: ubuntu-latest
     timeout-minutes: 150
+    outputs:
+      from_saved_list: ${{ steps.export.outputs.from_saved_list }}
     steps:
       - uses: actions/checkout@v4
 
@@ -54,10 +56,21 @@ jobs:
       - name: Install
         run: uv sync --frozen --no-dev
 
+      # If recht.bund.de cannot be reached, the site is built from the list saved by the last
+      # successful run (spec 014); the run is then marked as failed at the very end.
       - name: Analyze new publications and build site
+        id: export
         env:
           BUNDESDIFF_DATA: ${{ github.workspace }}/store
-        run: uv run bundesdiff export --site _site --days 365 --max-new "${{ inputs.max_new || '50' }}"
+          MAX_NEW: ${{ inputs.max_new || '50' }}
+        run: |
+          uv run --no-dev bundesdiff export --site _site --days 365 --max-new "$MAX_NEW" > "$RUNNER_TEMP/export.json"
+          cat "$RUNNER_TEMP/export.json"
+          if [ "$(jq -r .fromSavedList "$RUNNER_TEMP/export.json")" = "true" ]; then
+            fetched=$(date -u -d "$(jq -r .listFetched "$RUNNER_TEMP/export.json")" +'%d.%m.%Y, %H:%M')
+            echo "from_saved_list=true" >> "$GITHUB_OUTPUT"
+            echo "recht.bund.de konnte nicht erreicht werden; die Website zeigt die gespeicherte Liste vom $fetched UTC." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Move data older than one year to an archive
         id: prune
@@ -65,7 +78,7 @@ jobs:
           BUNDESDIFF_DATA: ${{ github.workspace }}/store
         run: |
           archive="archiv/bundesdiff-archiv-$(date -u +%F).tar.gz"
-          uv run bundesdiff prune --days 365 --archive "$archive"
+          uv run --no-dev bundesdiff prune --days 365 --archive "$archive"
           if [ -f "$archive" ]; then echo "archive=$archive" >> "$GITHUB_OUTPUT"; fi
 
       # One release per month collects that month's archives and the history bundle.
@@ -167,3 +180,15 @@ jobs:
 
       - id: deploy
         uses: actions/deploy-pages@v4
+
+  # RES-7: after the data was committed and the site published from the saved list, the run
+  # still ends as failed, so the owner gets an e-mail from GitHub.
+  source-unreachable:
+    needs: [update, deploy-pages]
+    if: always() && needs.update.outputs.from_saved_list == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report that recht.bund.de could not be reached
+        run: |
+          echo "::error::recht.bund.de konnte nicht erreicht werden – die Website zeigt die gespeicherte Liste (siehe Zusammenfassung des Laufs)."
+          exit 1

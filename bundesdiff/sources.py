@@ -11,6 +11,7 @@ from __future__ import annotations
 import datetime as dt
 import hashlib
 import json
+import logging
 import re
 import time
 from dataclasses import dataclass
@@ -33,6 +34,32 @@ CACHE_DIR = store.CACHE_DIR
 _client = httpx.Client(
     headers={"User-Agent": USER_AGENT}, follow_redirects=True, timeout=httpx.Timeout(30, connect=10)
 )
+log = logging.getLogger(__name__)
+
+QUICK_WAITS = (2, 10)  # seconds between the 3 tries of one request (RES-8)
+_sleep = time.sleep
+
+
+class Unreachable(Exception):
+    """A source could not be reached (or gave no usable answer)."""
+
+    def __init__(self, url: str, reason: str) -> None:
+        super().__init__(f"{url} nicht erreichbar: {reason}")
+        self.url, self.reason = url, reason
+
+
+def connection_problem(e: Exception) -> bool:
+    """No connection, a timeout, or the server is overloaded: worth trying again (RES-1)."""
+    if isinstance(e, httpx.TransportError):
+        return True
+    return isinstance(e, httpx.HTTPStatusError) and (
+        e.response.status_code >= 500 or e.response.status_code == 429)
+
+
+def reason(e: Exception) -> str:
+    """The first line of an error message, for logs and the one-line error of RES-6."""
+    text = str(e).strip()
+    return text.splitlines()[0] if text else type(e).__name__
 
 
 # --------------------------------------------------------------------------
@@ -46,11 +73,24 @@ def fetch(url: str, *, max_age: float | None = None, params: dict | None = None)
     path = CACHE_DIR / "http" / key[:2] / key
     if path.exists() and (max_age is None or time.time() - path.stat().st_mtime < max_age):
         return path.read_bytes()
-    resp = _client.get(full)
-    resp.raise_for_status()
+    resp = _get(full)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(resp.content)
     return resp.content
+
+
+def _get(url: str) -> httpx.Response:
+    for wait in (*QUICK_WAITS, None):
+        try:
+            resp = _client.get(url)
+            resp.raise_for_status()
+            return resp
+        except httpx.HTTPError as e:
+            if wait is None or not connection_problem(e):
+                raise
+            log.warning("%s: %s – next try in %d s", url, reason(e), wait)
+            _sleep(wait)
+    raise AssertionError("unreachable")
 
 
 def fetch_json(url: str, *, max_age: float | None = None, params: dict | None = None):
