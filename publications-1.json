@@ -1,6 +1,42 @@
 {
-"fetched": "2026-11-06T00:27",
+"fetched": "2026-11-06T17:35",
 "publications": [
+{
+"teil": "1",
+"year": 2026,
+"number": "330",
+"title": "Verordnung zur Anpassung der Eisenbahn-Bau- und Betriebsordnung (§ 32 EBO)",
+"date": "2026-11-06",
+"typ": "Verordnung",
+"initiant": "Bundesministerium für Verkehr",
+"fundstelle": "BGBl. 2026 I Nr. 330 vom 06.11.2026",
+"sachgebiet": "Eisenbahnbaurecht und Eisenbahnbetriebsrecht",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/330"
+},
+{
+"teil": "1",
+"year": 2026,
+"number": "329",
+"title": "Erste Verordnung zur Änderung der Verordnung nach § 119 Absatz 4 des Seearbeitsgesetzes",
+"date": "2026-11-06",
+"typ": "Verordnung",
+"initiant": "Bundesministerium für Arbeit und Soziales",
+"fundstelle": "BGBl. 2026 I Nr. 329 vom 06.11.2026",
+"sachgebiet": "Schiffsbesatzung",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/329"
+},
+{
+"teil": "1",
+"year": 2026,
+"number": "328",
+"title": "Verordnung zur Neuordnung der Berufsausbildung zum Veranstaltungskaufmann und zur Veranstaltungskauffrau",
+"date": "2026-11-06",
+"typ": "Verordnung",
+"initiant": "Bundesministerium für Wirtschaft und Energie",
+"fundstelle": "BGBl. 2026 I Nr. 328 vom 06.11.2026",
+"sachgebiet": "Berufliche Bildung",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/328"
+},
 {
 "teil": "1",
 "year": 2026,
@@ -5964,42 +6000,6 @@
 "fundstelle": "BGBl. 2025 I Nr. 215 vom 18.09.2025",
 "sachgebiet": "Apotheken- und Arzneimittelwesen, Gifte",
 "link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/215"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "214",
-"title": "Achtzehnte Verordnung zur Änderung der Zweihundertfünfunddreißigsten Durchführungsverordnung zur Luftverkehrs-Ordnung (Festlegung von Flugverfahren für An- und Abflüge nach Instrumentenflugregeln zum und vom Flughafen Nürnberg)",
-"date": "2025-09-17",
-"typ": "Verordnung",
-"initiant": "Bundesaufsichtsamt für Flugsicherung",
-"fundstelle": "BGBl. 2025 I Nr. 214 vom 17.09.2025",
-"sachgebiet": "Luftverkehr",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/214"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "213",
-"title": "Zwölfte Verordnung zur Änderung der Zweihundertelften Durchführungsverordnung zur Luftverkehrs-Ordnung (Festlegung von Flugverfahren für An- und Abflüge nach Instrumentenflugregeln zum und vom Verkehrslandeplatz Straubing)",
-"date": "2025-09-17",
-"typ": "Verordnung",
-"initiant": "Bundesaufsichtsamt für Flugsicherung",
-"fundstelle": "BGBl. 2025 I Nr. 213 vom 17.09.2025",
-"sachgebiet": "Luftverkehr",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/213"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "212",
-"title": "Zweiundzwanzigste Verordnung zur Änderung der Hundertdreiundachtzigsten Durchführungsverordnung zur Luftverkehrs-Ordnung (Festlegung von Flugverfahren für An- und Abflüge nach Instrumentenflugregeln zum und vom Verkehrslandeplatz Zweibrücken)",
-"date": "2025-09-17",
-"typ": "Verordnung",
-"initiant": "Bundesaufsichtsamt für Flugsicherung",
-"fundstelle": "BGBl. 2025 I Nr. 212 vom 17.09.2025",
-"sachgebiet": "Luftverkehr",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/212"
 }
 ]
 }
