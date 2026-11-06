@@ -672,6 +672,10 @@ dialog[open] { animation: window-open .2s ease-out; }
   -webkit-hyphenate-limit-before: 3; -webkit-hyphenate-limit-after: 3;
 }
 .old-data .keep { white-space: nowrap; } /* „30. Oktober 2026“ stays on one line */
+/* a domain name is never hyphenated: Safari would set „recht.bun-/d.de“. It may still break at
+   its own hyphens or after a dot (<wbr>), so it fits narrow columns with wide text spacing. */
+.domain { -webkit-hyphens: manual; hyphens: manual; }
+.whole-date { white-space: nowrap; -webkit-hyphens: manual; hyphens: manual; }
 /* intro, notice and timeline share one text edge: the intro's 20 px on smaller screens */
 @media (max-width: 900px) {
   .timeline-page { padding-left: 20px; padding-right: 20px; }

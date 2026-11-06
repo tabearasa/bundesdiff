@@ -68,6 +68,32 @@ function esc(text) {
   return String(text ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
+// Domain names in text from the data („Archivfassung von gesetze-im-internet.de vom …“) are
+// never hyphenated (see .domain in style.css); a long one may also break after a dot.
+const DOMAIN = /(?<![\p{L}\d.-])[a-z\d-]+(?:\.[a-z\d-]+)*\.(?:de|org|eu)(?![\p{L}\d])/gu;
+function escWithDomains(text) {
+  return esc(text).replace(DOMAIN, (d) => `<span class="domain">${d.replace(/\.(?=[^.]*\.)/g, ".<wbr>")}</span>`);
+}
+
+// Where an old text came from, as the object of „stammt aus …“, in plain words. The analysis
+// writes „Archivfassung von gesetze-im-internet.de vom 15.06.2024 (Internet Archive)“ or
+// „lokal gespeicherte Fassung vom 01.02.2026 (gesetze-im-internet.de)“.
+function oldSource(source) {
+  // „15.06.2024“ → „15. Juni 2024“, as dates are written in running text; never torn apart or
+  // hyphenated („Septem-/ber“), see .whole-date
+  const day = (d) => `<span class="whole-date">${esc(fullDate(d.split(".").reverse().join("-")))}</span>`;
+  const archived = /^Archivfassung von (\S+) vom (\d\d\.\d\d\.\d{4}) \(Internet Archive\)$/.exec(source);
+  if (archived) {
+    return `einer Kopie von ${escWithDomains(archived[1])}, die das Internet Archive am ${day(archived[2])} gespeichert hat`;
+  }
+  const stored = /^lokal gespeicherte Fassung vom (\d\d\.\d\d\.\d{4}) \((NeuRIS|\S+)\)$/.exec(source);
+  if (stored) {
+    const site = stored[2] === "NeuRIS" ? "vom Rechtsinformationsportal des Bundes" : `von ${escWithDomains(stored[2])}`;
+    return `einer Fassung ${site}, die bundesdiff am ${day(stored[1])} gespeichert hat`;
+  }
+  return `einer anderen Fassung (${escWithDomains(source)})`;
+}
+
 function el(html) {
   const t = document.createElement("template");
   t.innerHTML = html.trim();
@@ -572,7 +598,7 @@ async function openPublication(teil, year, number, refresh = false) {
   try {
     const item = state.pubs.find((p) => p.id === id);
     if (STATIC && item && !item.analyzed && !item.failed) {
-      main.innerHTML = `<div class="error-box"><strong>Diese Veröffentlichung ist noch nicht ausgewertet.</strong><br>Die Daten werden einmal täglich am Abend aktualisiert – bitte morgen noch einmal versuchen. Den amtlichen Text finden Sie schon jetzt auf recht.bund.de.</div>`;
+      main.innerHTML = `<div class="error-box"><strong>Diese Veröffentlichung ist noch nicht ausgewertet.</strong><br>Die Daten werden einmal täglich am Abend aktualisiert – bitte morgen noch einmal versuchen. Den amtlichen Text finden Sie schon jetzt auf <span class="domain">recht.bund.de</span>.</div>`;
       const pager = renderPager(id);
       if (pager) main.appendChild(pager);
       return;
@@ -585,7 +611,7 @@ async function openPublication(teil, year, number, refresh = false) {
       renderPublication();
     } catch (e) {
       console.error(e);
-      main.innerHTML = `<div class="error-box"><strong>Diese Seite konnte wegen eines Fehlers in bundesdiff nicht angezeigt werden.</strong><br>Bitte versuchen Sie es später noch einmal. Den amtlichen Text finden Sie auf recht.bund.de.</div>`;
+      main.innerHTML = `<div class="error-box"><strong>Diese Seite konnte wegen eines Fehlers in bundesdiff nicht angezeigt werden.</strong><br>Bitte versuchen Sie es später noch einmal. Den amtlichen Text finden Sie auf <span class="domain">recht.bund.de</span>.</div>`;
     }
   } catch (e) {
     if (state.currentId !== id) return;
@@ -655,7 +681,7 @@ function renderPublication() {
       </div>` : ""}
       <div class="links">
         <a href="${esc(pub.pdf)}" target="_blank" rel="noopener">Amtliches PDF öffnen</a>
-        <a href="${esc(pub.link)}" target="_blank" rel="noopener">Auf recht.bund.de ansehen</a>
+        <a href="${esc(pub.link)}" target="_blank" rel="noopener">Auf <span class="domain">recht.bund.de</span> ansehen</a>
         ${STATIC ? "" : `<button class="linklike" data-action="refresh" title="Die Auswertung mit den aktuellsten Daten wiederholen">Neu auswerten</button>`}
       </div>
     </section>`));
@@ -785,7 +811,7 @@ function renderAmendment(a, i) {
         <h2 tabindex="-1">${esc(lawLabel(a))}</h2>
         ${law ? `<div class="law-line">
           ${law.shortName && law.name !== law.shortName ? `<span>${esc(law.name)}</span>` : ""}
-          <span class="badge source" title="Woher der aktuelle Gesetzestext stammt">aktueller Text: ${law.source === "gii" ? "gesetze-im-internet.de" : "Rechtsinformationsportal (NeuRIS)"}, Stand ${esc(formatDate(law.version))}</span>
+          <span class="badge source" title="Woher der aktuelle Gesetzestext stammt">aktueller Text: ${law.source === "gii" ? `<span class="domain">gesetze-im-internet.de</span>` : "Rechtsinformationsportal (NeuRIS)"}, Stand ${esc(formatDate(law.version))}</span>
           <a href="${esc(law.url)}" target="_blank" rel="noopener">Ganzes Gesetz ansehen</a>
         </div>` : ""}
       </header>
@@ -867,7 +893,7 @@ function renderPar(p, article) {
           <button class="how" data-how="${esc(p.key)}" title="Wie wurde diese Gegenüberstellung erzeugt?">Wie ermittelt?</button>
         </div>
       </header>
-      ${p.source ? `<div class="par-note">Der bisherige Text stammt aus einer älteren, archivierten Fassung (${esc(p.source)}). Sie kann auch Änderungen enthalten, die nicht aus dieser Veröffentlichung stammen.</div>` : ""}
+      ${p.source ? `<div class="par-note">Der bisherige Text stammt aus ${oldSource(p.source)}. Sie kann auch Änderungen enthalten, die nicht aus dieser Veröffentlichung stammen.</div>` : ""}
     </section>`);
   $(".how", section).addEventListener("click", () => showHow(p, article));
   section.appendChild(renderDiff(p.rows));
@@ -985,21 +1011,22 @@ function openDialog(title, html) {
 /** Explain, for one paragraph, how its before/after texts were obtained. */
 function showHow(p, article) {
   const law = article.law || {};
-  const src = law.source === "gii" ? "gesetze-im-internet.de" : "dem Rechtsinformationsportal des Bundes (NeuRIS)";
+  // fixed markup, not data: inserted without esc()
+  const src = law.source === "gii" ? `<span class="domain">gesetze-im-internet.de</span>` : "dem Rechtsinformationsportal des Bundes (NeuRIS)";
   const parLabel = p.title.split(" ").slice(0, 2).join(" "); // "§ 38"
   const related = (article.instructions || []).filter((i) => i.location === parLabel || (i.location || "").startsWith(parLabel + " "));
   let how;
   if (p.state === "post") {
-    how = `<p>Der aktuelle Text von <strong>${esc(p.title)}</strong> auf ${esc(src)} (Stand ${esc(formatDate(law.version))})
+    how = `<p>Der aktuelle Text von <strong>${esc(p.title)}</strong> auf ${src} (Stand ${esc(formatDate(law.version))})
       <strong>enthält diese Änderung bereits</strong>. Er bildet deshalb die rechte Spalte „Nachher“.</p>
       <p>Die linke Spalte „Vorher“ wurde <strong>zurückgerechnet</strong>: Die Anweisungen aus dem Gesetzblatt wurden rückwärts
       angewendet (aus „B ersetzt A“ wird wieder A).
       ${p.source
-        ? `Wo das nicht möglich ist – etwa wenn ein ganzer Absatz neu gefasst wurde –, stammt der alte Wortlaut aus einer
-           ${esc(p.source)}.`
+        ? `Wo das nicht möglich ist – etwa wenn ein ganzer Absatz neu gefasst wurde –, stammt der alte Wortlaut aus
+           ${oldSource(p.source)}.`
         : "Dafür war keine ältere Fassung nötig."}</p>`;
   } else {
-    how = `<p>Der aktuelle Text von <strong>${esc(p.title)}</strong> auf ${esc(src)} (Stand ${esc(formatDate(law.version))})
+    how = `<p>Der aktuelle Text von <strong>${esc(p.title)}</strong> auf ${src} (Stand ${esc(formatDate(law.version))})
       <strong>enthält diese Änderung noch nicht</strong> – oft, weil sie erst später in Kraft tritt oder die Datenbank noch nicht aktualisiert wurde.
       Er bildet deshalb die linke Spalte „Vorher“.</p>
       <p>Die rechte Spalte „Nachher“ hat bundesdiff <strong>selbst berechnet</strong>, indem es die Anweisungen aus dem Gesetzblatt auf diesen Text angewendet hat.</p>`;
@@ -1210,8 +1237,8 @@ function oldDataNotice() {
   if (state.listFetched === null || state.listFetched === undefined) return null;
   if (!(Date.now() - state.listFetched > OLD_DATA_HOURS * 3600 * 1000)) return null;
   return el(`<p class="old-data">Die Liste der Veröffentlichungen ist vom <span class="keep">${esc(germanDay(state.listFetched))}</span>.
-    Neuere Veröffentlichungen fehlen hier vielleicht noch, weil recht.bund.de zuletzt nicht erreichbar war.
-    Die amtlichen Texte finden Sie immer auf <a href="https://www.recht.bund.de/">recht.bund.de</a>.</p>`);
+    Neuere Veröffentlichungen fehlen hier vielleicht noch, weil <span class="domain">recht.bund.de</span> zuletzt nicht erreichbar war.
+    Die amtlichen Texte finden Sie immer auf <a href="https://www.recht.bund.de/"><span class="domain">recht.bund.de</span></a>.</p>`);
 }
 
 // ---------------------------------------------------------------- search (spec 002, SRCH-*)

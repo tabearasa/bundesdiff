@@ -118,7 +118,8 @@ uv run pytest tests/frontend --browser firefox     # or webkit
   * Screenshots of all combinations land in `test-results/screenshots/`; failing tests leave
     a screenshot and a Playwright trace in `test-results/failures/`.
 * CI (`.github/workflows/tests.yml`) runs everything on every push in Chromium, Firefox and
-  WebKit and uploads the screenshots as `frontend-screenshots-<browser>`.
+  WebKit. Only when a test failed, it uploads the screenshots and traces as
+  `frontend-screenshots-<browser>` (kept 7 days).
 
 ## How the analysis works
 

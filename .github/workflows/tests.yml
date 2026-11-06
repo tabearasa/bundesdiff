@@ -52,13 +52,15 @@ jobs:
             python3 -c "import json; t = json.load(open('coverage.json'))['totals']; print(f\"**Coverage of the Python code:** {t['percent_covered_display']} % ({t['covered_lines']} of {t['num_statements']} lines)\")" >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Upload screenshots
-        if: always()
+      # only when something failed: the screenshots and traces show what the browser drew,
+      # the only way to see WebKit, which does not run on every developer machine
+      - name: Upload screenshots of a failed run
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: frontend-screenshots-${{ matrix.browser }}
           path: test-results/
-          retention-days: 14
+          retention-days: 7
 
   lint:
     runs-on: ubuntu-latest

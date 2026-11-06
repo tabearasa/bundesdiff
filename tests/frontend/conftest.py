@@ -43,6 +43,7 @@ PAGES = {
     "mixed-status": "#/1/2026/314",
     "announcement": "#/1/2026/315",
     "not-analyzed": "#/1/2026/322",
+    "gii-source": "#/1/2026/311",  # a law from gesetze-im-internet.de (source badge)
     "about": "#/ueber",
     "old-data": "#/",  # the start page, opened at LATER (see NOW_FOR_ROUTE)
 }

@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 from axe_playwright_python.sync_playwright import Axe
+from playwright.sync_api import expect
 
 from .centering import off_centre
 from .conftest import PAGES, THEMES, VIEWPORTS
@@ -110,6 +111,71 @@ def test_old_data_notice_keeps_the_date_and_short_words_whole(app, page, spacing
           return out;
         }""")]
     assert not torn, torn
+
+
+DOMAINS_AT_RISK = """root => {
+  // every visible domain name is set without automatic hyphenation (Safari set
+  // „recht.bun-/d.de“); it may break at its own hyphens or after a dot
+  const out = [];
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let t; (t = walker.nextNode());) {
+    const el = t.parentElement;
+    if (!el.checkVisibility()) continue;
+    const text = el.closest(".domain")?.textContent ?? t.data;
+    for (const m of text.matchAll(/(?<![\\p{L}\\d.-])[a-z\\d-]+(?:\\.[a-z\\d-]+)*\\.(?:de|org|eu)(?![\\p{L}\\d])/gu)) {
+      const style = getComputedStyle(el);
+      if ((style.hyphens || style.webkitHyphens) === "auto") out.push(`${m[0]}: hyphenated`);
+    }
+  }
+  // a date in running text stays on one line („30. Septem-/ber 2026“ in Firefox)
+  for (const d of root.querySelectorAll(".whole-date")) {
+    const r = document.createRange();
+    r.selectNodeContents(d);
+    const lines = new Set([...r.getClientRects()].filter((b) => b.width > 0).map((b) => Math.round(b.top)));
+    if (d.checkVisibility() && lines.size > 1) out.push(`${d.textContent}: torn`);
+  }
+  // a domain in visible text is shown too (a stray class once hid one on phones)
+  for (const d of root.querySelectorAll(".domain")) {
+    if (d.parentElement.checkVisibility() && !d.checkVisibility()) out.push(`${d.textContent}: hidden`);
+  }
+  return out;
+}"""
+
+
+@pytest.mark.spec("A11Y-5")
+@pytest.mark.parametrize("kind", PAGES)
+def test_domain_names_are_never_hyphenated(app, page, kind):
+    app(PAGES[kind])
+    found = page.locator("body").evaluate(DOMAINS_AT_RISK)
+    assert not found, found
+
+
+@pytest.mark.spec("A11Y-5", "A11Y-3")
+@pytest.mark.parametrize("spacing", [False, True])
+@pytest.mark.parametrize("route", ["#/1/2026/309", "#/1/2026/311"])
+def test_domain_names_and_dates_in_windows_stay_whole(app, page, route, spacing):
+    """The source of an archived old text comes from the data
+    („Archivfassung von gesetze-im-internet.de vom …“); on 311 the law itself is from there. The
+    help names every source. All at 320 px, also with the wider WCAG text spacing."""
+    page.set_viewport_size(VIEWPORTS["small"])
+    app(route)
+    if spacing:
+        page.add_style_tag(content=TEXT_SPACING)
+    found = [f"Seite: {d}" for d in page.locator("main").evaluate(DOMAINS_AT_RISK)]  # the notes
+    buttons = page.locator(".how")
+    assert buttons.count()
+    for i in range(buttons.count()):
+        buttons.nth(i).click()
+        settle(page)
+        title = page.locator("#dialog-title").inner_text()
+        found += [f"{title}: {d}" for d in page.locator("#dialog").evaluate(DOMAINS_AT_RISK)]
+        found += [f"{title}: {d}" for d in layout_issues(page)]
+        page.keyboard.press("Escape")
+        expect(page.locator("#dialog")).to_be_hidden()
+    open_help(page)
+    found += [f"Hilfe: {d}" for d in page.locator("body").evaluate(DOMAINS_AT_RISK)]
+    found += [f"Hilfe: {d}" for d in layout_issues(page)]
+    assert not found, "\n".join(found)
 
 
 @pytest.mark.spec("RES-4", "A11Y-5")

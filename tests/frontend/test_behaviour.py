@@ -92,6 +92,48 @@ def test_how_dialog_explains_a_paragraph(app):
     expect(dialog).to_be_hidden()
 
 
+def _old_source_texts(page) -> tuple[str, str]:
+    """The par-note and the „Wie wurde … ermittelt?“ window of the first paragraph with a source."""
+    note = page.locator(".par-note").filter(has_text="stammt aus").first
+    note.locator("xpath=ancestor::section[1]").locator(".how").click()
+    window = " ".join(page.locator("#dialog").inner_text().split())
+    page.keyboard.press("Escape")
+    return " ".join(note.inner_text().split()), window
+
+
+@pytest.mark.parametrize("route, source, says", [
+    ("#/1/2026/309", None,
+     r"einer Kopie von gesetze-im-internet\.de, die das Internet Archive am \d{1,2}\. [A-Z][a-zä]+ \d{4} "
+     r"gespeichert hat\."),
+    ("#/1/2026/311", "lokal gespeicherte Fassung vom 01.02.2026 (gesetze-im-internet.de)",
+     r"einer Fassung von gesetze-im-internet\.de, die bundesdiff am 1\. Februar 2026 gespeichert hat\."),
+    ("#/1/2026/311", "lokal gespeicherte Fassung vom 01.02.2026 (NeuRIS)",
+     r"einer Fassung vom Rechtsinformationsportal des Bundes, die bundesdiff am 1\. Februar 2026 "
+     r"gespeichert hat\."),
+    ("#/1/2026/311", "Rechtsdatenbank Beispiel (Stand 2025)",
+     r"einer anderen Fassung \(Rechtsdatenbank Beispiel \(Stand 2025\)\)\."),
+])
+def test_old_text_says_in_plain_words_where_it_came_from(app, page, route, source, says):
+    """Not „aus einer älteren, archivierten Fassung (Archivfassung … (Internet Archive))“ nor
+    „aus einer lokal gespeicherte Fassung“: one plain phrase, the same in the note and the window."""
+    if source:
+        def with_source(r):
+            data = r.fetch().json()
+            for article in data["articles"]:
+                for par in article.get("pars", []):
+                    if par.get("source"):
+                        par["source"] = source
+            r.fulfill(json=data)
+        page.route("**/data/1/2026/311.json", with_source)
+    app(route)
+    note, window = _old_source_texts(page)
+    assert re.search(f"Der bisherige Text stammt aus {says}", note), note
+    assert re.search(f"stammt der alte Wortlaut aus {says}", window), window
+    assert "Fassung: " not in note + window
+    if not source or source.startswith(("lokal", "Archiv")):  # a known source: no brackets left
+        assert "))" not in note + window
+
+
 def test_help_dialog_opens_and_closes(app):
     page = app()
     page.locator("#nav-help").click()
