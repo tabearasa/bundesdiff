@@ -412,7 +412,7 @@ def test_not_yet_analyzed_says_data_is_updated_daily(app):
 
 OLD_DATA_NOTICE = ("Die Liste der Veröffentlichungen ist vom 30. Oktober 2026. Neuere Veröffentlichungen "
                    "fehlen hier vielleicht noch, weil recht.bund.de zuletzt nicht erreichbar war. "
-                   "Die amtlichen Texte finden Sie immer auf recht.bund.de.")
+                   "Auf recht.bund.de finden Sie immer die amtlichen Texte.")
 
 
 @pytest.mark.spec("RES-4")
@@ -509,3 +509,152 @@ def test_notice_is_plain_text_with_a_border(app):
     widths = notice.evaluate("n => { const s = getComputedStyle(n); return [s.borderTopWidth, "
                              "s.borderRightWidth, s.borderBottomWidth, s.borderLeftWidth] }")
     assert all(float(w.removesuffix("px")) >= 1 for w in widths), widths
+
+
+SOURCE_CODE = "https://github.com/tabearasa/bundesdiff"
+
+
+@pytest.mark.spec("SRC-1", "SRC-2", "SRC-3")
+def test_about_page_links_to_the_source_code(app):
+    page = app(PAGES["about"])
+    section = page.locator("#main .about h2", has_text="Quelltext")
+    expect(section).to_have_text("Quelltext")
+    text = section.locator("xpath=following-sibling::p[1]")
+    expect(text).to_have_text(
+        "Der Quelltext von bundesdiff liegt öffentlich auf GitHub. Unter github.com/tabearasa/bundesdiff "
+        "können Sie nachlesen, wie die Änderungen berechnet werden, und Fehler melden.")
+    link = text.get_by_role("link", name="github.com/tabearasa/bundesdiff", exact=True)
+    expect(link).to_have_attribute("href", SOURCE_CODE)
+    expect(link).to_have_attribute("target", "_blank")
+    expect(link).to_have_attribute("rel", "noopener")
+    expect(link.locator(".domain")).to_have_text("github.com/tabearasa/bundesdiff")
+    link.focus()
+    expect(link).to_be_focused()
+
+
+@pytest.mark.spec("SRC-1")
+def test_source_code_link_is_only_on_the_about_page(app):
+    for kind in ("start", "amendment"):
+        page = app(PAGES[kind])
+        expect(page.locator(f'a[href="{SOURCE_CODE}"]')).to_have_count(0)
+    page.locator("#nav-help").click()  # the help dialog
+    expect(page.locator("#dialog")).to_be_visible()
+    expect(page.locator(f'a[href="{SOURCE_CODE}"]')).to_have_count(0)
+    expect(page.get_by_text("GitHub")).to_have_count(0)
+
+
+@pytest.mark.spec("SRC-4")
+def test_about_page_loads_nothing_from_github(app, page):
+    requested: list[str] = []
+    page.on("request", lambda r: requested.append(r.url))
+    app(PAGES["about"])
+    page.wait_for_load_state("networkidle")
+    assert not [u for u in requested if "github" in u], requested
+    embedded = page.locator("#main :is(img, script, iframe, link, object, embed, video, audio)")
+    expect(embedded).to_have_count(0)
+
+
+# Every text on screen that names bundesdiff (or GitHub): may the browser hyphenate it?
+_HYPHENATED_NAMES = """() => {
+  const found = [];
+  const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+    if (!/bundesdiff|GitHub/.test(n.textContent) || n.parentElement.closest('template, script, style')) continue;
+    const r = document.createRange(); r.selectNodeContents(n);
+    if (!r.getClientRects().length) continue;  // not shown
+    if (getComputedStyle(n.parentElement).hyphens === 'auto') found.push(n.textContent.trim().slice(0, 60));
+  }
+  return found;
+}"""
+
+
+@pytest.mark.spec("SRC-A2")
+@pytest.mark.parametrize("kind", PAGES)
+def test_the_name_bundesdiff_is_never_hyphenated(app, page, kind):
+    page.set_viewport_size(VIEWPORTS["small"])
+    app(PAGES[kind])
+    found = page.evaluate(_HYPHENATED_NAMES)
+    if kind == "start":  # the help window and its title
+        page.locator("#fab-help, #nav-help").locator("visible=true").first.click()
+        page.locator("#dialog[open]").wait_for()
+        found += page.evaluate(_HYPHENATED_NAMES)
+    assert not found, found
+
+
+# For every link inside running text (an inline link in a paragraph or list item), with keyboard
+# focus: the gap between its focus marker and each character beside it on the same line (px).
+# Neighbours are all characters of the paragraph or list item outside the link, also those in
+# other elements (e.g. „– 2 Vorschriften“ after a law in the contents list).
+_MARKER_GAPS = """root => {
+  const gaps = [];
+  for (const a of root.querySelectorAll('p a, li a, dd a')) {
+    if (getComputedStyle(a).display !== 'inline' || !a.getClientRects().length) continue;
+    a.focus();
+    const s = getComputedStyle(a);
+    if (s.outlineStyle === 'none') { gaps.push([a.textContent, 'no marker', -1]); continue; }
+    const grow = parseFloat(s.outlineWidth) + parseFloat(s.outlineOffset);
+    const boxes = [...a.getClientRects()];
+    const block = a.parentElement.closest('p, li, dd');
+    const walk = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+    for (let node = walk.nextNode(); node; node = walk.nextNode()) {
+      if (a.contains(node)) continue;
+      const text = node.textContent;
+      for (let i = 0; i < text.length; i++) {
+        if (!text[i].trim()) continue;
+        const r = document.createRange(); r.setStart(node, i); r.setEnd(node, i + 1);
+        for (const c of r.getClientRects()) {
+          const mid = (c.top + c.bottom) / 2;
+          for (const b of boxes) {
+            if (mid < b.top || mid > b.bottom) continue;  // another line
+            const gap = c.left >= b.right ? c.left - (b.right + grow)
+                      : c.right <= b.left ? (b.left - grow) - c.right : -1;
+            gaps.push([a.textContent.trim(), text[i], gap]);
+          }
+        }
+      }
+    }
+  }
+  // ::before marks such as the „§“ before each law in the contents list
+  for (const a of root.querySelectorAll('.glance-laws a')) {
+    a.focus();
+    const s = getComputedStyle(a), grow = parseFloat(s.outlineWidth) + parseFloat(s.outlineOffset);
+    const li = a.parentElement, first = a.getClientRects()[0];
+    const before = getComputedStyle(li, '::before');
+    if (before.content === 'none') continue;
+    const probe = document.createElement('span');
+    probe.textContent = '§ '; probe.style.font = before.font; probe.style.letterSpacing = before.letterSpacing;
+    probe.style.position = 'absolute'; probe.style.visibility = 'hidden'; probe.style.whiteSpace = 'pre';
+    document.body.append(probe);
+    probe.textContent = '§';
+    const signRight = li.getBoundingClientRect().left + probe.getBoundingClientRect().width;
+    probe.remove();
+    gaps.push([a.textContent.trim(), '§', (first.left - grow) - signRight]);
+  }
+  return gaps;
+}"""
+
+
+@pytest.mark.spec("SRC-A3")
+@pytest.mark.parametrize("width", [320, 360, 390, 414, 600, 1440])
+@pytest.mark.parametrize("kind", ["about", "amendment", "mixed-status", "old-data"])
+def test_focus_marker_of_links_in_text_keeps_clear_of_the_words(app, page, kind, width):
+    page.set_viewport_size({"width": width, "height": 800})
+    app(PAGES[kind])
+    page.keyboard.press("Tab")  # the keyboard was used: focus() now shows the marker
+    gaps = page.locator("body").evaluate(_MARKER_GAPS)
+    assert gaps, "no link in running text found"
+    tight = [g for g in gaps if g[2] < 2]
+    assert not tight, tight
+    if kind == "about":  # 1 px more room below and above: clear of the underline and of descenders
+        link = page.get_by_role("link", name="github.com/tabearasa/bundesdiff", exact=True)
+        link.focus()
+        assert link.evaluate("a => parseFloat(getComputedStyle(a).paddingBottom)") >= 1
+
+
+@pytest.mark.spec("SRC-A4")
+@pytest.mark.parametrize("width", [320, 620, 1440])
+def test_source_paragraph_is_set_ragged_right(app, page, width):
+    page.set_viewport_size({"width": width, "height": 800})
+    page = app(PAGES["about"])
+    paragraph = page.locator("#main .about h2", has_text="Quelltext").locator("xpath=following-sibling::p[1]")
+    assert paragraph.evaluate("p => getComputedStyle(p).textAlign") in ("left", "start")

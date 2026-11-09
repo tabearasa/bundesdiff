@@ -17,10 +17,10 @@
   <a class="skip-link" href="#main" data-action="skip">Zum Inhalt springen</a>
   <header class="topbar">
     <nav class="navbar" aria-label="Hauptnavigation">
-      <a class="brand" href="#/" aria-label="bundesdiff – Startseite"><span class="brand-mark" aria-hidden="true">§</span><span class="brand-text">bundesdiff</span></a>
+      <a class="brand" href="#/" aria-label="bundesdiff – Startseite"><span class="brand-mark" aria-hidden="true">§</span><span class="brand-text name">bundesdiff</span></a>
       <a class="nav-item" href="#/" data-nav="list"><span class="long">Veröffentlichungen</span><span class="short">Liste</span></a>
       <button class="nav-item" id="nav-help" data-help=""><span class="long">So funktioniert's</span><span class="short">Hilfe</span></button>
-      <a class="nav-item" href="#/ueber" data-nav="about"><span class="long">Über bundesdiff</span><span class="short">Über</span></a>
+      <a class="nav-item" href="#/ueber" data-nav="about"><span class="long">Über <span class="name">bundesdiff</span></span><span class="short">Über</span></a>
       <button class="search-btn" id="search-open" aria-label="Suchen" aria-haspopup="dialog" aria-keyshortcuts="Control+K Meta+K /">
         <svg class="magnifier" viewBox="0 0 16 16" aria-hidden="true"><circle cx="6.8" cy="6.8" r="4.3"/><path d="M10 10l3.8 3.8"/></svg>
         <span class="long">Suchen …</span><kbd class="long">Strg K</kbd>
@@ -80,12 +80,12 @@
   <!-- the menu of the phone layout (PTL-6) -->
   <dialog id="menu" class="menu" aria-label="Menü">
     <div class="menu-head">
-      <a class="menu-brand" href="#/" aria-label="bundesdiff – Startseite"><span class="brand-mark" aria-hidden="true">§</span><span class="menu-brand-text">bundesdiff</span></a>
+      <a class="menu-brand" href="#/" aria-label="bundesdiff – Startseite"><span class="brand-mark" aria-hidden="true">§</span><span class="menu-brand-text name">bundesdiff</span></a>
       <button id="menu-close" class="close-x" aria-label="Schließen"><svg class="x" viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/></svg></button>
     </div>
     <ul class="menu-list">
       <li><a href="#/" data-nav="list">Veröffentlichungen</a></li>
-      <li><a href="#/ueber" data-nav="about">Über bundesdiff</a></li>
+      <li><a href="#/ueber" data-nav="about">Über <span class="name">bundesdiff</span></a></li>
     </ul>
     <div class="menu-theme">
       <span id="menu-theme-label">Dunkle Ansicht</span>
@@ -100,11 +100,11 @@
 
   <template id="tpl-intro">
     <section class="welcome tl-intro">
-      <p class="masthead-name">bundesdiff</p>
+      <p class="masthead-name name">bundesdiff</p>
       <h1>Was ändert sich im Gesetz?</h1>
       <p class="lead">
         Neue Gesetze und Änderungen erscheinen im <strong>Bundesgesetzblatt</strong>. Dort steht meist nur eine
-        Anweisung wie „In § 4 wird „zwei Monate“ durch „fünf Wochen“ ersetzt“. bundesdiff arbeitet die Änderung
+        Anweisung wie „In § 4 wird „zwei Monate“ durch „fünf Wochen“ ersetzt“. <span class="name">bundesdiff</span> arbeitet die Änderung
         in das Gesetz ein und zeigt <del class="sample">vorher</del> und <ins class="sample">nachher</ins> nebeneinander.
       </p>
       <p class="tl-help"><button class="linklike" data-help="">So funktioniert's – und was die Fachbegriffe bedeuten</button></p>
@@ -118,7 +118,7 @@
         <li><strong>Veröffentlichung holen.</strong> Das amtliche PDF wird von <span class="domain">recht.bund.de</span> geladen, der offiziellen Plattform des Bundesgesetzblatts.</li>
         <li><strong>Anweisungen erkennen.</strong> Der Text wird in seine Artikel zerlegt. Jede Änderungsanweisung („… wird gestrichen“, „Nach Absatz 3 wird folgender Absatz eingefügt …“) wird erkannt: <em>was</em> geändert wird, <em>wo</em> und <em>wie</em>.</li>
         <li><strong>Betroffenes Gesetz finden.</strong> Der aktuelle Text des geänderten Gesetzes wird aus dem Rechtsinformationsportal des Bundes oder von <span class="domain">gesetze-im-internet.de</span> geladen.</li>
-        <li><strong>Vorher und Nachher bestimmen.</strong> Diese Datenbanken werden meist innerhalb weniger Tage aktualisiert. bundesdiff prüft daher für jede Vorschrift, ob der aktuelle Text die Änderung schon enthält:
+        <li><strong>Vorher und Nachher bestimmen.</strong> Diese Datenbanken werden meist innerhalb weniger Tage aktualisiert. <span class="name">bundesdiff</span> prüft daher für jede Vorschrift, ob der aktuelle Text die Änderung schon enthält:
           <ul>
             <li><span class="badge applied">neuer Text berechnet</span> Noch nicht enthalten: Der aktuelle Text ist „Vorher“, der neue Text wird durch Anwenden der Anweisungen berechnet.</li>
             <li><span class="badge consolidated">alter Text rekonstruiert</span> Schon enthalten: Der aktuelle Text ist „Nachher“, der alte Text wird zurückgerechnet – notfalls mithilfe einer archivierten älteren Fassung (Internet Archive).</li>
@@ -130,8 +130,8 @@
     <section id="help-status">
       <h3>Was bedeuten die Markierungen?</h3>
       <dl class="legend">
-        <div><dt><span class="badge applied">neuer Text berechnet</span></dt><dd>Das Gesetz im Internet ist noch nicht aktualisiert; bundesdiff zeigt, wie es nach der Änderung lauten wird.</dd></div>
-        <div><dt><span class="badge consolidated">alter Text rekonstruiert</span></dt><dd>Das Gesetz im Internet ist schon aktualisiert; bundesdiff zeigt zusätzlich, wie es vorher lautete.</dd></div>
+        <div><dt><span class="badge applied">neuer Text berechnet</span></dt><dd>Das Gesetz im Internet ist noch nicht aktualisiert; <span class="name">bundesdiff</span> zeigt, wie es nach der Änderung lauten wird.</dd></div>
+        <div><dt><span class="badge consolidated">alter Text rekonstruiert</span></dt><dd>Das Gesetz im Internet ist schon aktualisiert; <span class="name">bundesdiff</span> zeigt zusätzlich, wie es vorher lautete.</dd></div>
         <div><dt><span class="badge failed">nicht anwendbar</span></dt><dd>Die Anweisung passte nicht zum Gesetzestext (z. B. ungewöhnliche Formulierung). Sie ist nur im Wortlaut zu sehen.</dd></div>
         <div><dt><span class="badge unsupported">nicht dargestellt</span></dt><dd>Änderungen an Inhaltsverzeichnissen, Anlagen und Tabellen werden nicht gegenübergestellt.</dd></div>
         <div><dt><del class="sample">durchgestrichen</del></dt><dd>Text, der wegfällt.</dd></div>
@@ -141,7 +141,7 @@
     <section id="help-terms">
       <h3>Kleines Wörterbuch</h3>
       <dl class="glossary">
-        <dt>Bundesgesetzblatt (BGBl.)</dt><dd>Das amtliche Veröffentlichungsblatt des Bundes. Erst mit der Veröffentlichung dort („Verkündung“) wird ein Gesetz wirksam. bundesdiff zeigt Teil I – die Gesetze und Verordnungen für Deutschland.</dd>
+        <dt>Bundesgesetzblatt (BGBl.)</dt><dd>Das amtliche Veröffentlichungsblatt des Bundes. Erst mit der Veröffentlichung dort („Verkündung“) wird ein Gesetz wirksam. <span class="name">bundesdiff</span> zeigt Teil I – die Gesetze und Verordnungen für Deutschland.</dd>
         <dt>Gesetz / Verordnung</dt><dd>Ein Gesetz beschließt der Bundestag. Eine Verordnung erlässt die Regierung oder ein Ministerium auf Grundlage eines Gesetzes – sie regelt meist Details.</dd>
         <dt>Änderungsgesetz</dt><dd>Ein Gesetz, das bestehende Gesetze ändert. Es enthält nicht den neuen Gesamttext, sondern nur die Anweisungen, was zu ändern ist.</dd>
         <dt>Artikel</dt><dd>Ein Änderungsgesetz ist in Artikel gegliedert; oft ändert jeder Artikel ein anderes Gesetz. Der letzte Artikel regelt meist, ab wann alles gilt („Inkrafttreten“).</dd>
@@ -149,7 +149,7 @@
         <dt>Fassung</dt><dd>Der Wortlaut eines Gesetzes zu einem bestimmten Zeitpunkt. „Bisherige Fassung“ = vor der Änderung, „neue Fassung“ = danach.</dd>
         <dt>Inkrafttreten</dt><dd>Der Tag, ab dem eine Regelung gilt. Er kann nach der Veröffentlichung liegen.</dd>
         <dt>„(weggefallen)“</dt><dd>Platzhalter für eine aufgehobene Vorschrift, damit sich die Nummerierung der übrigen nicht verschiebt.</dd>
-        <dt>Synopse</dt><dd>Fachwort für die Gegenüberstellung von alter und neuer Fassung – das, was bundesdiff erzeugt.</dd>
+        <dt>Synopse</dt><dd>Fachwort für die Gegenüberstellung von alter und neuer Fassung – das, was <span class="name">bundesdiff</span> erzeugt.</dd>
       </dl>
     </section>
     <section id="help-sources">
@@ -160,16 +160,16 @@
 
   <template id="tpl-about">
     <section class="welcome about">
-      <h1>Über bundesdiff</h1>
-      <h2>Wozu gibt es bundesdiff?</h2>
+      <h1>Über <span class="name">bundesdiff</span></h1>
+      <h2>Wozu gibt es <span class="name">bundesdiff</span>?</h2>
       <p>
         Wenn ein Gesetz geändert wird, steht im Bundesgesetzblatt meist nicht der neue Text, sondern nur eine Anweisung,
-        <em>wie</em> der alte Text zu ändern ist. bundesdiff arbeitet diese Anweisungen ein und zeigt den bisherigen und
+        <em>wie</em> der alte Text zu ändern ist. <span class="name">bundesdiff</span> arbeitet diese Anweisungen ein und zeigt den bisherigen und
         den neuen Text nebeneinander – damit alle nachvollziehen können, was sich ändert, auch ohne juristische Ausbildung.
       </p>
       <h2>Ohne Gewähr</h2>
       <p>
-        bundesdiff ist kein amtliches Angebot und keine Rechtsberatung. Alles wird automatisch ausgewertet und kann Fehler
+        <span class="name">bundesdiff</span> ist kein amtliches Angebot und keine Rechtsberatung. Alles wird automatisch ausgewertet und kann Fehler
         enthalten. Rechtsverbindlich ist allein das amtliche Bundesgesetzblatt.
       </p>
       <h2>Woher kommen die Daten?</h2>
@@ -187,8 +187,14 @@
       </p>
       <h2>Ihre Daten</h2>
       <p>
-        bundesdiff setzt keine Cookies, verwendet keine Analyse- oder Werbedienste und lädt nichts von fremden Servern.
+        <span class="name">bundesdiff</span> setzt keine Cookies, verwendet keine Analyse- oder Werbedienste und lädt nichts von fremden Servern.
         Nur Ihre Einstellungen – helle oder dunkle Ansicht, Darstellung der Änderungen – merkt sich Ihr Browser auf Ihrem Gerät.
+      </p>
+      <h2>Quelltext</h2>
+      <p class="ragged">
+        Der Quelltext von <span class="name">bundesdiff</span> liegt öffentlich auf <span class="name">GitHub</span>. Unter
+        <a href="https://github.com/tabearasa/bundesdiff" target="_blank" rel="noopener"><span class="domain">github.com/<wbr>tabearasa/<wbr>bundesdiff</span></a>
+        können Sie nachlesen, wie die Änderungen berechnet werden, und Fehler melden.
       </p>
     </section>
   </template>
@@ -197,7 +203,7 @@
     <div class="loading">
       <div class="spinner" aria-hidden="true"></div>
       <p>Die Veröffentlichung wird ausgewertet …</p>
-      <p class="hint">bundesdiff liest das amtliche PDF und lädt die betroffenen Gesetze. Beim ersten Aufruf kann das bis zu einer Minute dauern – danach geht es sofort.</p>
+      <p class="hint"><span class="name">bundesdiff</span> liest das amtliche PDF und lädt die betroffenen Gesetze. Beim ersten Aufruf kann das bis zu einer Minute dauern – danach geht es sofort.</p>
     </div>
   </template>
 

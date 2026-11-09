@@ -43,7 +43,7 @@ def settle(page) -> None:
     page.wait_for_function("document.getAnimations().every(a => a.playState !== 'running')")
 
 
-@pytest.mark.spec("A11Y-1", "A11Y-4", "A11Y-5", "A11Y-11", "RES-A1")
+@pytest.mark.spec("A11Y-1", "A11Y-4", "A11Y-5", "A11Y-11", "RES-A1", "SRC-A1")
 @pytest.mark.parametrize("theme", THEMES)
 @pytest.mark.parametrize("viewport", VIEWPORTS)
 @pytest.mark.parametrize("kind", PAGES)
@@ -220,9 +220,9 @@ TEXT_SPACING = """* { line-height: 1.5 !important; letter-spacing: .12em !import
                  p { margin-bottom: 2em !important; }"""
 
 
-@pytest.mark.spec("A11Y-2", "RES-A1")
+@pytest.mark.spec("A11Y-2", "RES-A1", "SRC-A1")
 @pytest.mark.parametrize("zoom", [200, 400])
-@pytest.mark.parametrize("kind", ["start", "amendment", "old-data"])
+@pytest.mark.parametrize("kind", ["start", "amendment", "old-data", "about"])
 def test_layout_when_zoomed(app, page, kind, zoom):
     """Browser zoom on a 1280 × 800 desktop: 200 % (WCAG 1.4.4) and 400 % (WCAG 1.4.10).
 
@@ -238,15 +238,49 @@ def test_layout_when_zoomed(app, page, kind, zoom):
 ZOOM_400 = {"width": 320, "height": 200}  # 1280×800 at 400 %: the navbar instead of the round buttons
 
 
-@pytest.mark.spec("A11Y-3", "A11Y-2", "RES-A1")
+@pytest.mark.spec("A11Y-3", "A11Y-2", "RES-A1", "SRC-A1")
 @pytest.mark.parametrize("viewport", ["desktop", "small", "zoom-400"])
-@pytest.mark.parametrize("kind", ["start", "amendment", "old-data"])
+@pytest.mark.parametrize("kind", ["start", "amendment", "old-data", "about"])
 def test_layout_with_wide_text_spacing(app, page, kind, viewport):
     page.set_viewport_size(ZOOM_400 if viewport == "zoom-400" else VIEWPORTS[viewport])
     app(PAGES[kind])
     page.add_style_tag(content=TEXT_SPACING)
     issues = layout_issues(page)
     assert not issues, "\n".join(issues)
+
+
+@pytest.mark.spec("A11Y-3", "NAV-3")
+@pytest.mark.parametrize("width", [960, 1000, 1110, 1135, 1200])
+def test_navbar_fits_with_wide_text_spacing(app, page, width):
+    """Firefox needed more room for the full navbar with the wider spacing than the media
+    queries give it: the light/dark switch ran off the right edge at about 960–1135 px."""
+    page.set_viewport_size({"width": width, "height": 900})
+    app(PAGES["start"])
+    page.add_style_tag(content=TEXT_SPACING)
+    page.evaluate("new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
+    navbar = page.locator(".navbar")
+    assert navbar.evaluate("n => n.scrollWidth <= n.clientWidth"), "the navbar is wider than the page"
+    switch = page.locator("#theme-toggle").bounding_box()
+    assert switch["x"] + switch["width"] <= width, switch
+    assert navbar.evaluate("n => n.getBoundingClientRect().height") <= 56
+    issues = layout_issues(page)
+    assert not issues, "\n".join(issues)
+
+
+@pytest.mark.spec("A11Y-3", "A11Y-12")
+@pytest.mark.parametrize("width", [1100, 1440])
+def test_short_navbar_on_wide_screens_keeps_a_square_search_button(app, page, width):
+    """Larger reader settings can make even a wide screen's navbar fall back to the short
+    labels; the search button is then the same centred square as on narrower screens."""
+    page.set_viewport_size({"width": width, "height": 900})
+    app(PAGES["start"])
+    page.locator(".navbar").evaluate("n => { n.style.paddingLeft = (innerWidth - 560) + 'px'; }")
+    page.evaluate("new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
+    expect(page.locator(".navbar")).to_have_class(re.compile(r"\btighter\b"))
+    box = page.locator("#search-open").bounding_box()
+    assert box["width"] == box["height"] == 32, box
+    glass = page.locator("#search-open .magnifier").bounding_box()
+    assert abs((glass["x"] + glass["width"] / 2) - (box["x"] + box["width"] / 2)) <= 0.5, (glass, box)
 
 
 @pytest.mark.spec("A11Y-1", "A11Y-4")
@@ -322,7 +356,7 @@ def test_no_emoji_on_screen(app, page, kind):
     assert not PICTOGRAPHS.findall(text)
 
 
-@pytest.mark.spec("A11Y-6", "RES-A1")
+@pytest.mark.spec("A11Y-6", "RES-A1", "SRC-A1")
 @pytest.mark.parametrize("theme", THEMES)
 @pytest.mark.parametrize("kind", PAGES)
 def test_accessibility(app, page, kind, theme):

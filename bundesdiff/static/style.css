@@ -116,6 +116,12 @@ a, .linklike {
 }
 a:hover, .linklike:hover { color: var(--accent); text-decoration-color: var(--accent); }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* a link inside running text: the marker hugs the link, so it stays clear of the words beside it (SRC-A3) */
+/* 1 px more room below and above (no shift: vertical padding of inline text takes no space), so the
+   marker stays clear of the underline and of descenders such as „g“ */
+:is(.welcome, .dialog-body) :is(p, li, dd) a:focus-visible, .glance-laws a:focus-visible, .old-data a:focus-visible {
+  outline-offset: 0; padding-block: 1px;
+}
 .muted { color: var(--muted); }
 .count { white-space: nowrap; } /* "– 49 Vorschriften" never torn apart */
 ::selection { background: #f3e2b8; color: #1d1b18; }
@@ -158,6 +164,10 @@ a:hover, .linklike:hover { color: var(--accent); text-decoration-color: var(--ac
   .topbar { padding: 0 16px; }
   .navbar { gap: 4px 16px; }
 }
+/* the same where the navbar measured itself too narrow (fitNavbar in app.js, A11Y-3) */
+.navbar.tight .brand-text { display: none; }
+.navbar.tighter .long { display: none; }
+.navbar.tighter .short { display: inline; }
 @media (max-width: 400px) {
   .topbar { padding: 0 8px; }
   /* the free room is shared out between all entries, so they stay apart as far as it goes;
@@ -213,6 +223,8 @@ button, label, select { -webkit-hyphens: manual; hyphens: manual; overflow-wrap:
   float: left; font-size: 3.4em; line-height: .85; padding: 4px 8px 0 0; color: var(--accent);
 }
 .welcome p, .plain-summary { text-align: justify; -webkit-hyphens: auto; hyphens: auto; }
+/* a long address that cannot break early would stretch the line before it (SRC-A4) */
+.welcome p.ragged { text-align: left; }
 .example { margin: 18px 28px; padding: 0; font-style: italic; font-size: 20px; color: var(--ink-soft); text-align: center; }
 .example-diff { margin: 18px 0 22px; border: 1px solid var(--rule-strong); border-radius: 3px; overflow: hidden; font-size: 19px; }
 .example-diff > div { display: grid; grid-template-columns: 96px 1fr; }
@@ -611,6 +623,9 @@ dialog[open] { animation: window-open .2s ease-out; }
   .search-btn .magnifier { width: 18px; height: 18px; }
   .search-btn .long { display: none; }
 }
+/* the same square where the navbar measured itself too narrow (fitNavbar in app.js) */
+.navbar.tighter .search-btn { padding: 0; width: 32px; justify-content: center; }
+.navbar.tighter .search-btn .magnifier { width: 18px; height: 18px; }
 
 /* ---------- search window (SRCH-2 … SRCH-8) ---------- */
 .search-dialog { width: min(720px, calc(100vw - 32px)); margin-top: 8vh; max-height: 84vh; }
@@ -675,6 +690,8 @@ dialog[open] { animation: window-open .2s ease-out; }
 /* a domain name is never hyphenated: Safari would set „recht.bun-/d.de“. It may still break at
    its own hyphens or after a dot (<wbr>), so it fits narrow columns with wide text spacing. */
 .domain { -webkit-hyphens: manual; hyphens: manual; }
+/* product names: no „bun-desdiff“, no „Git-Hub“; .welcome .name also beats „.welcome p“ */
+.name, .welcome .name { -webkit-hyphens: manual; hyphens: manual; }
 .whole-date { white-space: nowrap; -webkit-hyphens: manual; hyphens: manual; }
 /* intro, notice and timeline share one text edge: the intro's 20 px on smaller screens */
 @media (max-width: 900px) {

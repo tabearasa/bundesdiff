@@ -42,8 +42,8 @@ read is never shown: then the build time is used, or "Datenstand unbekannt".
 
 **RES-5** If that time is more than 36 hours old, the start page shows above the timeline:
 „Die Liste der Veröffentlichungen ist vom 4. November 2026. Neuere Veröffentlichungen fehlen
-hier vielleicht noch, weil recht.bund.de zuletzt nicht erreichbar war. Die amtlichen Texte
-finden Sie immer auf recht.bund.de.“ (the date of the fetch in German time, „recht.bund.de“ as a link). The date is
+hier vielleicht noch, weil recht.bund.de zuletzt nicht erreichbar war. Auf recht.bund.de
+finden Sie immer die amtlichen Texte.“ (the date of the fetch in German time, „recht.bund.de“ as a link). The date is
 compared with the reader's clock, so the notice also appears when the daily runs stop
 altogether.
 
@@ -80,7 +80,9 @@ passes the layout and axe checks in light and dark mode.
 
 * 4 tries for the list, waiting 1, 5 and 15 minutes (owner, 2026-11-04).
 * A run published from the saved list counts as failed, after publishing (owner, 2026-11-04).
-* Notice after 36 hours, text as in RES-5 (owner, 2026-11-04).
+* Notice after 36 hours, text as in RES-5 (owner, 2026-11-04). Last sentence turned around
+  so the link no longer stands before the full stop, which its focus marker covered (SRC-A3;
+  owner, 2026-11-09).
 * Single requests to every source are retried quickly: RES-8 (owner, 2026-11-04).
 * `bundesdiff serve` stays as it is (owner, 2026-11-04).
 

@@ -89,7 +89,7 @@ function oldSource(source) {
   const stored = /^lokal gespeicherte Fassung vom (\d\d\.\d\d\.\d{4}) \((NeuRIS|\S+)\)$/.exec(source);
   if (stored) {
     const site = stored[2] === "NeuRIS" ? "vom Rechtsinformationsportal des Bundes" : `von ${escWithDomains(stored[2])}`;
-    return `einer Fassung ${site}, die bundesdiff am ${day(stored[1])} gespeichert hat`;
+    return `einer Fassung ${site}, die <span class="name">bundesdiff</span> am ${day(stored[1])} gespeichert hat`;
   }
   return `einer anderen Fassung (${escWithDomains(source)})`;
 }
@@ -403,7 +403,7 @@ function renderUpcoming(pubs, typ = "") {
     </li>`;
   return `
     <p class="tl-note">Die Daten werden automatisch aus dem Wortlaut der Vorschriften über das Inkrafttreten gelesen
-      und gelten nur für Veröffentlichungen, die bundesdiff schon ausgewertet hat – verbindlich ist allein das Bundesgesetzblatt.</p>
+      und gelten nur für Veröffentlichungen, die <span class="name">bundesdiff</span> schon ausgewertet hat – verbindlich ist allein das Bundesgesetzblatt.</p>
     <ol class="timeline upcoming">
       ${section("Demnächst", soon, `${typ ? `Für Veröffentlichungen der Art <span class="keep">„${esc(typ)}“</span> sind` : "Es sind"} keine kommenden Termine bekannt, an denen etwas in Kraft oder außer Kraft tritt.`)}
       ${recent.length ? section(recent.some(({ e }) => e.kind === "out") ? "Kürzlich in Kraft oder außer Kraft getreten" : "Kürzlich in Kraft getreten", recent) : ""}
@@ -611,7 +611,7 @@ async function openPublication(teil, year, number, refresh = false) {
       renderPublication();
     } catch (e) {
       console.error(e);
-      main.innerHTML = `<div class="error-box"><strong>Diese Seite konnte wegen eines Fehlers in bundesdiff nicht angezeigt werden.</strong><br>Bitte versuchen Sie es später noch einmal. Den amtlichen Text finden Sie auf <span class="domain">recht.bund.de</span>.</div>`;
+      main.innerHTML = `<div class="error-box"><strong>Diese Seite konnte wegen eines Fehlers in <span class="name">bundesdiff</span> nicht angezeigt werden.</strong><br>Bitte versuchen Sie es später noch einmal. Den amtlichen Text finden Sie auf <span class="domain">recht.bund.de</span>.</div>`;
     }
   } catch (e) {
     if (state.currentId !== id) return;
@@ -828,7 +828,7 @@ function renderAmendment(a, i) {
   if (a.pars && a.pars.length) a.pars.forEach((p) => syn.appendChild(renderPar(p, a)));
   else syn.appendChild(el(`<p class="no-pars">Für dieses Gesetz konnte keine Gegenüberstellung erzeugt werden. Unter „Wortlaut im Gesetzblatt“ sehen Sie die Änderungen so, wie sie veröffentlicht wurden.</p>`));
   const cmd = $('[data-body="befehle"]', card);
-  cmd.appendChild(el(`<p class="tab-intro">Gesetzesänderungen werden als Anweisungen formuliert („… wird durch … ersetzt“). Hier steht jede Anweisung im Originalwortlaut – und ob bundesdiff sie anwenden konnte.</p>`));
+  cmd.appendChild(el(`<p class="tab-intro">Gesetzesänderungen werden als Anweisungen formuliert („… wird durch … ersetzt“). Hier steht jede Anweisung im Originalwortlaut – und ob <span class="name">bundesdiff</span> sie anwenden konnte.</p>`));
   cmd.appendChild(renderInstructions(a.instructions || []));
   card.appendChild(el(`<a class="to-start" href="#" data-action="top">↑ Zum Anfang der Veröffentlichung</a>`));
   return card;
@@ -1002,7 +1002,7 @@ function openDialog(title, html) {
   const dlg = $("#dialog");
   closeMenu(true);
   dlg.opener = lastPressed && !dlg.contains(lastPressed) ? lastPressed : document.activeElement;
-  $("#dialog-title").textContent = title;
+  $("#dialog-title").innerHTML = esc(title).replace(/\bbundesdiff\b/g, '<span class="name">bundesdiff</span>');
   $("#dialog-body").innerHTML = html;
   dlg.showModal();
   $("#dialog-body").scrollTop = 0;
@@ -1029,7 +1029,7 @@ function showHow(p, article) {
     how = `<p>Der aktuelle Text von <strong>${esc(p.title)}</strong> auf ${src} (Stand ${esc(formatDate(law.version))})
       <strong>enthält diese Änderung noch nicht</strong> – oft, weil sie erst später in Kraft tritt oder die Datenbank noch nicht aktualisiert wurde.
       Er bildet deshalb die linke Spalte „Vorher“.</p>
-      <p>Die rechte Spalte „Nachher“ hat bundesdiff <strong>selbst berechnet</strong>, indem es die Anweisungen aus dem Gesetzblatt auf diesen Text angewendet hat.</p>`;
+      <p>Die rechte Spalte „Nachher“ hat <span class="name">bundesdiff</span> <strong>selbst berechnet</strong>, indem es die Anweisungen aus dem Gesetzblatt auf diesen Text angewendet hat.</p>`;
   }
   const list = related.length
     ? `<h3>Angewendete Anweisungen</h3><ol class="how-list">${related.map((i) =>
@@ -1238,7 +1238,7 @@ function oldDataNotice() {
   if (!(Date.now() - state.listFetched > OLD_DATA_HOURS * 3600 * 1000)) return null;
   return el(`<p class="old-data">Die Liste der Veröffentlichungen ist vom <span class="keep">${esc(germanDay(state.listFetched))}</span>.
     Neuere Veröffentlichungen fehlen hier vielleicht noch, weil <span class="domain">recht.bund.de</span> zuletzt nicht erreichbar war.
-    Die amtlichen Texte finden Sie immer auf <a href="https://www.recht.bund.de/"><span class="domain">recht.bund.de</span></a>.</p>`);
+    Auf <a href="https://www.recht.bund.de/"><span class="domain">recht.bund.de</span></a> finden Sie immer die amtlichen Texte.</p>`);
 }
 
 // ---------------------------------------------------------------- search (spec 002, SRCH-*)
@@ -1480,6 +1480,25 @@ $("#menu").addEventListener("click", (ev) => {
   if (ev.target.id === "menu" && outside) closeMenu(); // a tap on the blurred page
 });
 $("#dialog").addEventListener("close", () => returnFocus($("#dialog").opener));
+
+/* A11Y-3: with the wider letter spacing a reader may set, the full navbar can be wider than the
+   media queries in style.css expect (Firefox, about 960–1135 px). Then the name next to the logo
+   gives way, and if that is not enough, the long labels give way to the short ones – as on
+   narrower screens. Measured again whenever an entry changes its size; in the next frame, so the
+   change of size this causes does not start a loop. */
+const navbar = $(".navbar");
+function fitNavbar() {
+  navbar.classList.remove("tight", "tighter");
+  if (navbar.scrollWidth > navbar.clientWidth) navbar.classList.add("tight");
+  if (navbar.scrollWidth > navbar.clientWidth) navbar.classList.add("tighter");
+}
+let navbarFrame = 0;
+const watchNavbar = new ResizeObserver(() => {
+  cancelAnimationFrame(navbarFrame);
+  navbarFrame = requestAnimationFrame(fitNavbar);
+});
+watchNavbar.observe(navbar);
+for (const item of navbar.children) watchNavbar.observe(item);
 
 showThemeButton();
 showDataDate();
