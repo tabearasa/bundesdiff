@@ -1,5 +1,7 @@
 """Offline tests for instruction parsing, application and diffing."""
 
+import pytest
+
 from bundesdiff.amendments import parse_citation, parse_instructions, parse_location
 from bundesdiff.diffing import diff_units, word_diff
 from bundesdiff.engine import Snapshots, check, find_par, forward, reverse, run
@@ -149,3 +151,161 @@ def test_footnote_marks_are_not_part_of_article_headings():
     assert [a.heading for a in doc.articles] == [
         "Änderung des Designgesetzes", "Weitere Änderung des Gesetzes gegen den unlauteren Wettbewerb",
         "Änderung der Verordnung (EU) 2018/1240"]
+
+
+# --------------------------------------------------------------------------
+# Found with the bill Drucksache 21/6588 (spec 016); each also affects publications.
+
+
+def test_sentences_end_after_a_reference_number():
+    """§ 15 Absatz 2 ROG: "… nach Satz 1. Bei raumbedeutsamen …" was one sentence, so the
+    "Satz 6" of Artikel 4 Nummer 12 a) did not exist. § 4c BauGB: "… Absatz 3 Satz 4. Sie nutzen …"."""
+    rog = ("Fordert die Raumordnungsbehörde den Vorhabenträger nicht innerhalb der Frist nach Satz 3 zur "
+           "Vervollständigung der Verfahrensunterlagen auf, beginnt die Frist des Absatzes 1 Satz 3 am Tag des "
+           "Eingangs der Verfahrensunterlagen nach Satz 1. Bei raumbedeutsamen Planungen und Maßnahmen der "
+           "Verteidigung entscheidet das Bundesministerium der Verteidigung.")
+    assert [s[:6] for s in split_sentences(rog)] == ["Forder", "Bei ra"]
+    baugb = ("Gegenstand der Überwachung ist auch die Durchführung von Maßnahmen nach § 1a Absatz 3 Satz 4. "
+             "Sie nutzen dabei die im Umweltbericht nach Nummer 3 Buchstabe b der Anlage 1 angegebenen "
+             "Überwachungsmaßnahmen und die Informationen der Behörden nach § 4 Absatz 3.")
+    assert len(split_sentences(baugb)) == 2
+    assert len(split_sentences("Die Sätze 1 und 2. Danach gilt Absatz 3.")) == 2
+    # dates and ordinals still do not end a sentence
+    assert len(split_sentences("Dieses Gesetz tritt am 1. Januar 2027 in Kraft.")) == 1
+    assert len(split_sentences("Es gilt die 32. Verordnung zur Durchführung des Gesetzes.")) == 1
+    assert len(split_sentences("Es gilt Satz 1 1. Halbsatz entsprechend.")) == 1
+
+
+def test_sentence_of_a_paragraph_without_absatz():
+    """Artikel 12 (InVorG): "In § 6 Satz 2 …" failed with "Satz 2 nicht gefunden", because NeuRIS
+    wraps the text of a § without Absätze in an unnumbered Absatz."""
+    law = Node("law", parts=[Node("par", "§ 6", "Unterrichtung der Gemeinde", parts=[Node("abs", "", parts=[
+        "Soweit ein Grundstück nach diesem Gesetz veräußert wird, besteht kein Vorkaufsrecht der Gemeinde nach "
+        "den Vorschriften des Bauplanungsrechts. Die Mitteilungspflicht nach § 28 des Baugesetzbuchs entfällt."])])])
+    ins = parse_instructions(lines(
+        "In § 6 Satz 2 wird die Angabe „§ 28“ durch die Angabe „den §§ 28 und 28b“ ersetzt."))
+    forward(law, ins[0])
+    assert find_par(law, "§6")[0].full_text().endswith(
+        "Die Mitteilungspflicht nach den §§ 28 und 28b des Baugesetzbuchs entfällt.")
+
+
+def windbg() -> Node:
+    """§ 6 Absatz 1 WindBG, shortened: two lists in one Absatz, after Satz 3 and after Satz 8."""
+    return Node("law", parts=[Node("par", "§ 6", "Genehmigungserleichterung in Windenergiegebieten", parts=[
+        Node("abs", "(1)", parts=[
+            "Wird die Errichtung einer Windenergieanlage beantragt, ist keine Prüfung durchzuführen. Abweichend von "
+            "Satz 1 ist eine Umweltverträglichkeitsprüfung durchzuführen. Satz 1 ist nur anzuwenden,",
+            Node("nr", "1.", parts=["wenn bei Ausweisung des Windenergiegebietes eine Umweltprüfung nach § 8 des "
+                                    "Raumordnungsgesetzes oder § 2 Absatz 4 des Baugesetzbuchs durchgeführt wurde und"]),
+            Node("nr", "2.", parts=["soweit das Windenergiegebiet nicht in einem Nationalpark liegt."]),
+            "Die zuständige Behörde hat Minderungsmaßnahmen anzuordnen. Geeignete Minderungsmaßnahmen sind "
+            "anzuordnen. Soweit Maßnahmen nicht verfügbar sind, hat der Betreiber eine Zahlung zu leisten. Die "
+            "Zahlung ist festzusetzen. Die Höhe der Zahlung beträgt:",
+            Node("nr", "1.", parts=["450 Euro je Megawatt nach § 2 Absatz 4 der Verordnung,"]),
+            Node("nr", "2.", parts=["ansonsten 3 000 Euro je Megawatt installierter Leistung."]),
+            "Sie ist von dem Betreiber zu leisten.",
+        ])])])
+
+
+def test_number_of_the_list_that_a_sentence_introduces():
+    """Artikel 8 Nummer 2 (WindBG): "In § 6 Absatz 1 Satz 3 Nummer 1 …" failed with "Satz 3 nicht
+    gefunden": the sentence was looked for inside Nummer 1 instead of choosing the list by it."""
+    law = windbg()
+    ins = parse_instructions(lines(
+        "In § 6 Absatz 1 Satz 3 Nummer 1 wird die Angabe „§ 2 Absatz 4“ durch die Angabe „§ 2a Absatz 2 und 3“ "
+        "ersetzt."))
+    assert check(law, ins[0]) == "pre"
+    forward(law, ins[0])
+    first, second = [p for p in find_par(law, "§6")[0].children[0].children if p.label == "1."]
+    assert "§ 2a Absatz 2 und 3 des Baugesetzbuchs" in first.full_text()
+    assert "§ 2 Absatz 4 der Verordnung" in second.full_text()  # the list of Satz 8 is untouched
+
+    law = windbg()
+    ins = parse_instructions(lines(
+        "In § 6 Absatz 1 Satz 8 Nummer 1 wird die Angabe „§ 2 Absatz 4“ durch die Angabe „§ 3“ ersetzt."))
+    forward(law, ins[0])
+    first, second = [p for p in find_par(law, "§6")[0].children[0].children if p.label == "1."]
+    assert "§ 2 Absatz 4 des Baugesetzbuchs" in first.full_text()
+    assert "§ 3 der Verordnung" in second.full_text()
+
+
+def test_units_of_the_list_that_a_sentence_introduces():
+    """With two lists in one Absatz, "Satz 8 Nummer 2 wird … ersetzt" must not touch the first list."""
+    law = windbg()
+    ins = parse_instructions(lines("""
+§ 6 Absatz 1 Satz 8 Nummer 2 wird durch die folgende Nummer 2 ersetzt:
+„2. ansonsten 4 000 Euro je Megawatt installierter Leistung.“
+"""))
+    forward(law, ins[0])
+    texts = [p.full_text() for p in find_par(law, "§6")[0].children[0].children]
+    assert texts[1] == "2. soweit das Windenergiegebiet nicht in einem Nationalpark liegt."
+    assert texts[3] == "2. ansonsten 4 000 Euro je Megawatt installierter Leistung."
+    assert len(texts) == 4
+
+
+def test_table_rows_with_numbers_are_a_list():
+    """Artikel 2 Nummer 2 a) (§ 1 Absatz 2 BauNVO): NeuRIS delivers the list of Baugebiete as a table
+    ("1. | Kleinsiedlungsgebiete | (WS)"), so "Nummer 1 wird gestrichen" found no Nummer 1."""
+    import xml.etree.ElementTree as ET
+
+    from bundesdiff.sources import _xml_parts
+
+    rows = [("1.", "Kleinsiedlungsgebiete", "(WS)"), ("2.", "reine Wohngebiete", "(WR)"),
+            ("3.", "allgemeine Wohngebiete", "(WA).")]
+    xml = "<content><p>Die Flächen können dargestellt werden als</p><table>" + "".join(
+        "<tr>" + "".join(f"<td><p>{c}</p></td>" for c in r) + "</tr>" for r in rows) + "</table></content>"
+    absatz = Node("abs", "(2)")
+    _xml_parts(ET.fromstring(xml), absatz)
+    assert [(c.kind, c.label, c.parts) for c in absatz.children] == [
+        ("nr", "1.", ["Kleinsiedlungsgebiete | (WS)"]), ("nr", "2.", ["reine Wohngebiete | (WR)"]),
+        ("nr", "3.", ["allgemeine Wohngebiete | (WA)."])]
+
+    law = Node("law", parts=[Node("par", "§ 1", "Allgemeine Vorschriften", parts=[absatz])])
+    ins = parse_instructions(lines("""
+2. § 1 wird wie folgt geändert:
+a) Absatz 2 wird wie folgt geändert:
+aa) Nummer 1 wird gestrichen.
+bb) Die Nummern 2 bis 3 werden zu den Nummern 1 bis 2.
+"""))
+    for i in ins:
+        forward(law, i)
+    assert [c.full_text() for c in absatz.children] == ["1. reine Wohngebiete | (WR)",
+                                                        "2. allgemeine Wohngebiete | (WA)."]
+
+    # a table whose first column is not a numbering stays a table
+    other = Node("abs", "(1)")
+    _xml_parts(ET.fromstring("<content><table><tr><td>Zone</td><td>Wert</td></tr>"
+                             "<tr><td>I</td><td>10</td></tr></table></content>"), other)
+    assert other.parts == ["Zone | Wert", "I | 10"]
+
+
+@pytest.mark.spec("ENT-8")
+def test_a_bill_is_never_taken_as_already_in_the_law():
+    """Artikel 2 Nummer 9 (§ 6a Absatz 2 BauNVO): "Nach Nummer 3 wird die folgende Nummer 4 eingefügt"
+    was judged as already done, because a Nummer 4 exists; the renumbering after it then failed."""
+    law = Node("law", parts=[Node("par", "§ 6a", "Urbane Gebiete", parts=[Node("abs", "(2)", parts=[
+        "Zulässig sind",
+        Node("nr", "1.", parts=["Wohngebäude,"]),
+        Node("nr", "2.", parts=["Geschäfts- und Bürogebäude,"]),
+        Node("nr", "3.", parts=["Einzelhandelsbetriebe, Schank- und Speisewirtschaften sowie Betriebe des "
+                                "Beherbergungsgewerbes,"]),
+        Node("nr", "4.", parts=["sonstige Gewerbebetriebe,"]),
+        Node("nr", "5.", parts=["Anlagen für Verwaltungen sowie für kirchliche, kulturelle, soziale, "
+                                "gesundheitliche und sportliche Zwecke."]),
+    ])])])
+    ins = parse_instructions(lines("""
+9. § 6a Absatz 2 wird wie folgt geändert:
+a) Nach Nummer 3 wird die folgende Nummer 4 eingefügt:
+„4. Musikclubs,“.
+b) Die bisherigen Nummern 4 und 5 werden zu den Nummern 5 und 6.
+"""))
+    result = run(law, ins, Snapshots(lambda key: None), "pre", force_state="pre")
+    assert [(r.status, r.state) for r in result.results] == [("applied", "pre"), ("applied", "pre")]
+    after = [c.full_text() for c in result.pars[0].after.children[0].children]
+    assert after[2:5] == ["3. Einzelhandelsbetriebe, Schank- und Speisewirtschaften sowie Betriebe des "
+                          "Beherbergungsgewerbes,", "4. Musikclubs,", "5. sonstige Gewerbebetriebe,"]
+    assert after[5].startswith("6. Anlagen für Verwaltungen")
+    assert [c.label for c in result.pars[0].before.children[0].children] == ["1.", "2.", "3.", "4.", "5."]
+    # without the bill's fixed direction the engine still guesses, as for publications
+    guessed = run(law, ins, Snapshots(lambda key: None), "pre")
+    assert guessed.results[0].state == "post"

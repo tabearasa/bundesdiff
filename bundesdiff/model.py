@@ -205,6 +205,12 @@ _ABBREV = set(
     "Bek Dr Prof Rn Rdnr St Str Tz Abschn Unterabs Var Alt Hs Halbs Ges Verf".split()
 )
 _SENT_END = re.compile(r"[.?!](?=\s+[„\"(]?[A-ZÄÖÜ§])")
+# "… nach Satz 1. Bei …", "… Absatz 3 Satz 4. Sie …", "… die Sätze 1 und 2. Danach …": the number
+# belongs to a reference, so the full stop ends the sentence (unlike "am 1. Januar", "die 32. Verordnung")
+_REFERENCE_NUMBER = re.compile(
+    r"(?:Satz|Satzes|Sätzen?|Absatz|Absatzes|Absätzen?|Nummern?|Artikels?|Halbsatz|§§?)\s+"
+    r"(?:\d+[a-z]*\s*(?:,|und|bis|oder)\s*)*$")
+_AFTER_ORDINAL = re.compile(r"\s+(?:Halbsatz|Halbsatzes|Alternative|Variante|Teilsatz|Spiegelstrich)\b")
 
 
 def split_sentences(text: str) -> list[str]:
@@ -216,8 +222,11 @@ def split_sentences(text: str) -> list[str]:
     for m in _SENT_END.finditer(text):
         word = re.search(r"(\S+)$", text[start:m.start()])
         prev = word.group(1) if word else ""
-        if prev in _ABBREV or prev.isdigit() or re.fullmatch(r"[a-z]", prev):
-            continue  # "Nr. 5", "1. Januar", "z. B."
+        if prev in _ABBREV or re.fullmatch(r"[a-z]", prev):
+            continue  # "Nr. 5", "z. B."
+        if prev.isdigit() and not (_REFERENCE_NUMBER.search(text[start:m.start() - len(prev)])
+                                   and not _AFTER_ORDINAL.match(text, m.end())):
+            continue  # "1. Januar", "32. Verordnung", "Satz 1 1. Halbsatz"
         out.append(text[start:m.end()].strip())
         start = m.end()
     rest = text[start:].strip()

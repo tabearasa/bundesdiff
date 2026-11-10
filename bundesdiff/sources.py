@@ -391,6 +391,23 @@ def _inline_text(el: ET.Element) -> str:
     return "".join(out)
 
 
+def _numbered_rows(rows: list[str]) -> list[Node] | None:
+    """A table whose first column numbers its rows ("1. | Kleinsiedlungsgebiete | (WS)") is a list.
+
+    § 1 Absatz 2 BauNVO is delivered like this; amendments address its rows as "Nummer 1".
+    """
+    units = []
+    for row in rows:
+        label, _, rest = row.partition(" | ")
+        kind = label_kind(label)
+        if not kind or kind[0] == "abs" or parse_label(label)[2] or not rest:
+            return None
+        units.append(Node(kind[0], label, parts=[rest]))
+    if len(units) < 2 or len({u.kind for u in units}) != 1:
+        return None
+    return units
+
+
 def _xml_parts(el: ET.Element, node: Node) -> None:
     for child in el:
         tag = _local(child.tag)
@@ -420,7 +437,8 @@ def _xml_parts(el: ET.Element, node: Node) -> None:
             for tr in child.iter():
                 if _local(tr.tag) == "tr":
                     rows.append(" | ".join(normalize("".join(td.itertext())) for td in tr if _local(td.tag) in ("td", "th")))
-            node.parts.extend(r for r in rows if r)
+            rows = [r for r in rows if r]
+            node.parts.extend(_numbered_rows(rows) or rows)
         elif tag in ("content", "blockList", "intro", "wrapUp", "list", "blockContainer", "hcontainer",
                      "subparagraph", "wrap", "listIntroduction", "listWrapUp"):
             _xml_parts(child, node)

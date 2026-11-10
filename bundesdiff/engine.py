@@ -52,6 +52,55 @@ def unit_steps(path: list[Step]) -> list[Step]:
     return [s for s in path if s.kind not in ("satz", "heading", "intro", "outro")]
 
 
+def _transparent(node: Node) -> bool:
+    return node.kind == "block" or (node.kind == "abs" and not node.label)
+
+
+def _sentence_count(text: str, so_far: int) -> int:
+    """Sentences that ``text`` adds to a unit which has ``so_far`` sentences already."""
+    sentences = split_sentences(text)
+    # text after a list that starts in lower case continues the sentence before the list
+    return len(sentences) - (1 if sentences and sentences[0][:1].islower() and so_far else 0)
+
+
+def _units_by_sentence(node: Node, kind: str) -> list[tuple[int, Node, int]]:
+    """The sub-units of ``kind`` with the sentence that introduces them: (sentence, container, index).
+
+    "Satz 3 Nummer 1" names the list that follows the third sentence of the unit – an Absatz can
+    hold several lists, each with its own Nummer 1.
+    """
+    found: list[tuple[int, Node, int]] = []
+    count = 0
+
+    def walk(n: Node) -> None:
+        nonlocal count
+        for i, p in enumerate(n.parts):
+            if isinstance(p, str):
+                count += _sentence_count(p, count)
+            elif p.kind == kind:
+                found.append((count, n, i))
+            elif _transparent(p):
+                walk(p)
+
+    walk(node)
+    return found
+
+
+def _in_sentence(node: Node, st: Step, satz: Step) -> list[tuple[Node, int]]:
+    """(container, index) of the units ``st`` in the list introduced by sentence ``satz`` of ``node``."""
+    units = _units_by_sentence(node, st.kind)
+    wanted = [(n, c, i) for n, c, i in units if str(n) == satz.keys[0]]
+    if not wanted:
+        # the sentences were counted differently: only safe when the unit has a single list
+        runs = {n for n, _, _ in units}
+        if len(runs) != 1:
+            return []
+        wanted = units
+    container = wanted[0][1]
+    keys = _keys_for(st, container)
+    return [(c, i) for _, c, i in wanted if c is container and c.parts[i].key in keys]
+
+
 def resolve(law: Node, path: list[Step]) -> Node:
     steps = unit_steps(path)
     if not steps or steps[0].kind != "par":
@@ -60,12 +109,32 @@ def resolve(law: Node, path: list[Step]) -> Node:
     if not found:
         raise ApplyError(f"§ {steps[0].keys[0]} nicht gefunden")
     node = found[0]
-    for st in steps[1:]:
-        child = node.find_child(st.kind, st.keys[0])
+    satz: Step | None = None
+    for st in path[next(i for i, s in enumerate(path) if s is steps[0]) + 1:]:
+        if st.kind == "satz":
+            satz = st
+            continue
+        if st.kind in ("heading", "intro", "outro"):
+            continue
+        if satz is not None:
+            hits = _in_sentence(node, st, satz)
+            child = (hits[0][0].parts[hits[0][1]], 0) if hits else None
+            satz = None
+        else:
+            child = node.find_child(st.kind, st.keys[0])
         if not child:
             raise ApplyError(f"{st.label()} nicht gefunden")
         node = child[0]
     return node
+
+
+def _satz_before_last_unit(path: list[Step]) -> Step | None:
+    """The "Satz 3" of "Satz 3 Nummer 1": a sentence step directly before the last unit step."""
+    units = [i for i, s in enumerate(path) if s.kind not in ("satz", "heading", "intro", "outro")]
+    if len(units) < 2:
+        return None
+    between = [s for s in path[units[-2] + 1: units[-1]] if s.kind == "satz"]
+    return between[-1] if between else None
 
 
 def select_units(law: Node, path: list[Step]) -> tuple[Node, list[int]]:
@@ -75,7 +144,13 @@ def select_units(law: Node, path: list[Step]) -> tuple[Node, list[int]]:
     if last.kind == "par":
         container = law
     else:
-        container = resolve(law, steps[:-1]).container_for(last.kind)
+        parent = resolve(law, path[: next(i for i, s in enumerate(path) if s is last)])
+        satz = _satz_before_last_unit(path)
+        if satz is not None:
+            # never fall back to the unit's other lists: their "Nummer 1" is a different one
+            hits = _in_sentence(parent, last, satz)
+            return (hits[0][0], [i for _, i in hits]) if hits else (parent.container_for(last.kind), [])
+        container = parent.container_for(last.kind)
     idx = [i for i, p in enumerate(container.parts)
            if isinstance(p, Node) and p.kind == last.kind and p.key in _keys_for(last, container)]
     return container, idx
@@ -121,6 +196,9 @@ class Slot:
 
 def own_sentence_slots(node: Node) -> list[Slot]:
     """One slot per sentence of the unit's own text (not its sub-units)."""
+    # a § without Absätze: its text lies in one unnumbered Absatz ("In § 6 Satz 2 …")
+    while not node.texts() and len(node.children) == 1 and _transparent(node.children[0]):
+        node = node.children[0]
     slots: list[Slot] = []
     for i, p in enumerate(node.parts):
         if not isinstance(p, str):
@@ -150,7 +228,10 @@ def text_slots(node: Node, path: list[Step]) -> list[Slot]:
         idx = [i for i, p in enumerate(node.parts) if isinstance(p, str)
                and (i < first_child if part == "intro" else i > last_child)]
         return [Slot(node, i) for i in idx]
-    satz = next((s for s in path if s.kind == "satz"), None)
+    satz = next((s for s in reversed(path) if s.kind == "satz"), None)
+    if satz and any(s.kind not in ("satz", "heading", "intro", "outro")
+                    for s in path[next(i for i, s in enumerate(path) if s is satz):]):
+        satz = None  # "Satz 3 Nummer 1": the sentence chose the list (resolve), the text is the Nummer's
     if satz:
         slots = own_sentence_slots(node)
         out = []
@@ -688,7 +769,9 @@ def affected_pars(ins: Instruction) -> list[str]:
     return keys
 
 
-def run(law: Node, instructions: list[Instruction], snaps: Snapshots, default_state: str) -> AmendmentResult:
+def run(law: Node, instructions: list[Instruction], snaps: Snapshots, default_state: str,
+        force_state: str | None = None) -> AmendmentResult:
+    """``force_state="pre"``: the text is known not to contain the changes (a bill, spec 016 ENT-8)."""
     groups: dict[str, list[Instruction]] = {}
     results: dict[int, InstructionResult] = {}
     for ins in instructions:
@@ -708,7 +791,7 @@ def run(law: Node, instructions: list[Instruction], snaps: Snapshots, default_st
     for key, group in groups.items():
         votes = [check(law, ins) for ins in group]
         pre, post = votes.count("pre"), votes.count("post")
-        state = "post" if post > pre else "pre" if pre > post else default_state
+        state = force_state or ("post" if post > pre else "pre" if pre > post else default_state)
         states[key] = state
         if state == "pre":
             for ins in group:
