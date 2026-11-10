@@ -692,10 +692,14 @@ def test_contents_bar_is_at_the_top_on_phones(app, page):
 @pytest.mark.parametrize("kind", PAGES)
 def test_end_of_every_page_can_be_scrolled_above_the_round_buttons(app, page, kind, viewport):
     on_phone(app, page, PAGES[kind], viewport=viewport)
-    page.keyboard.press("End")  # also: the lens must not pull the page back up
+    at_end = "scrollY + innerHeight >= document.documentElement.scrollHeight - 2"
+    page.keyboard.press("End")
+    # WebKit scrolls to the end smoothly: on a long page (a bill) and a slow CI runner that took
+    # longer than a fixed wait. So wait for the end first, then check that the lens does not pull
+    # the page back up.
+    page.wait_for_function(at_end, timeout=5000)
     page.wait_for_timeout(900)
-    assert page.evaluate("scrollY + innerHeight >= document.documentElement.scrollHeight - 2"), \
-        "the page was pulled back up from its end"
+    assert page.evaluate(at_end), "the page was pulled back up from its end"
     top = page.evaluate("Math.min(...[...document.querySelectorAll('.fab-bar .fab')].filter(b => b.offsetParent).map(b => b.getBoundingClientRect().top))")
     end = page.evaluate("""() => {
         const all = [...document.querySelectorAll('#main *')].filter(e => {
