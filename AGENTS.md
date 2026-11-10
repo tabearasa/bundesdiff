@@ -186,7 +186,8 @@ after their date, not searched and not on the timeline.
 
 **GitHub Pages**: the site is published by the `deploy-pages` job of every update run, while
 the repository variable `DEPLOY_PAGES` is `true` and *GitHub Actions* is the Pages source. It
-deploys only when `tests.yml` passed for the commit (Chromium, Firefox and lint; WebKit does
-not block for now). The site has no Impressum: the owner
+deploys only when lint, Chromium and Firefox of `tests.yml` passed for the commit; WebKit does
+not block for now (owner, 2026-11-10) and is not waited for. A commit that changes only files
+under `.github/` uses its parent's tests. The site has no Impressum: the owner
 judges it a private, non-commercial project (decision 2026-11-04). The frontend only reads
 relative `data/…` files, so any static host works too.
