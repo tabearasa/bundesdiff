@@ -18,6 +18,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # For now a failure in WebKit does not fail the run, so it does not stop the deployment of the
+    # site (update.yml publishes only when this run passed) – owner, 2026-11-10. Its job still
+    # shows the result.
+    continue-on-error: ${{ matrix.browser == 'webkit' }}
     strategy:
       fail-fast: false
       matrix:

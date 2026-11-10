@@ -121,7 +121,8 @@ uv run pytest tests/frontend --browser firefox     # or webkit
     a screenshot and a Playwright trace in `test-results/failures/`.
 * CI (`.github/workflows/tests.yml`) runs everything on every push in Chromium, Firefox and
   WebKit. Only when a test failed, it uploads the screenshots and traces as
-  `frontend-screenshots-<browser>` (kept 7 days).
+  `frontend-screenshots-<browser>` (kept 7 days). For now a WebKit failure does not fail the
+  run (owner, 2026-11-10), so it does not stop the deployment – look at its job anyway.
 
 ## How the analysis works
 
@@ -185,6 +186,7 @@ after their date, not searched and not on the timeline.
 
 **GitHub Pages**: the site is published by the `deploy-pages` job of every update run, while
 the repository variable `DEPLOY_PAGES` is `true` and *GitHub Actions* is the Pages source. It
-deploys only when `tests.yml` passed for the commit. The site has no Impressum: the owner
+deploys only when `tests.yml` passed for the commit (Chromium, Firefox and lint; WebKit does
+not block for now). The site has no Impressum: the owner
 judges it a private, non-commercial project (decision 2026-11-04). The frontend only reads
 relative `data/…` files, so any static host works too.
