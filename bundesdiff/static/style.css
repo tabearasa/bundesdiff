@@ -154,11 +154,13 @@ a:hover, .linklike:hover { color: var(--accent); text-decoration-color: var(--ac
   text-decoration-thickness: 2px; text-underline-offset: 6px;
 }
 .short { display: none; }
-/* NAV-3: shorter where the full labels would not fit on one row (Firefox needs ~840 px for them) */
-@media (max-width: 959px) {
+/* NAV-3: shorter where the full labels would not fit on one row. With four pages Firefox needs
+   1218 px for the logo's name, the long labels and the search field, 1084 px without the name and
+   930 px with the square search (Chromium: 1151, 1033, 880 px; measured 2026-11-10) */
+@media (max-width: 1229px) {
   .brand-text { display: none; }
 }
-@media (max-width: 819px) {
+@media (max-width: 939px) {
   .long { display: none; }
   .short { display: inline; }
   .topbar { padding: 0 16px; }

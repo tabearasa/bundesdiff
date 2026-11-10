@@ -32,8 +32,8 @@ screen readers (`aria-current="page"`). On a publication no entry is marked.
 
 **NAV-3** The navbar is one row high on every screen it is shown on (all but the phone
 layout of PTL-1, so down to 320 px wide on low screens and at 400 % zoom), in portrait and
-landscape, and in both colour themes. Below 960 px the logo shows only "§"; below 820 px the
-entries show short labels – "Liste", "Entwürfe", "Hilfe", "Über". Below 480 px – and wherever
+landscape, and in both colour themes. Below 1230 px the logo shows only "§"; below 940 px the
+entries show short labels (both moved up on 2026-11-10 for the fourth page, spec 016) – "Liste", "Entwürfe", "Hilfe", "Über". Below 480 px – and wherever
 the entries still do not fit, for example with wider text spacing – the three pages
 ("Veröffentlichungen", "Gesetzentwürfe", "Über bundesdiff") are in the menu of PTL-6, opened by
 an entry "Menü" in their place; it opens at the top of the screen and scrolls where the screen
