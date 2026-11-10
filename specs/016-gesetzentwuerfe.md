@@ -1,6 +1,6 @@
 # 016 Gesetzentwürfe: what a bill would change (prototype with one bill)
 
-Status: accepted
+Status: done
 Prefix: ENT
 
 ## Problem
