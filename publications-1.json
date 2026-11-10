@@ -1,6 +1,54 @@
 {
-"fetched": "2026-11-08T22:59",
+"fetched": "2026-11-10T11:41",
 "publications": [
+{
+"teil": "1",
+"year": 2026,
+"number": "334",
+"title": "Siebte Verordnung zur Änderung der Pflegepersonaluntergrenzen-Verordnung",
+"date": "2026-11-09",
+"typ": "Verordnung",
+"initiant": "Bundesministerium für Gesundheit",
+"fundstelle": "BGBl. 2026 I Nr. 334 vom 09.11.2026",
+"sachgebiet": "Sozialgesetzbuch",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/334"
+},
+{
+"teil": "1",
+"year": 2026,
+"number": "333",
+"title": "Verordnung zur Neuordnung der Verordnung über die Prüfung zu anerkannten Fortbildungsabschlüssen in der Finanzdienstleistungswirtschaft",
+"date": "2026-11-09",
+"typ": "Verordnung",
+"initiant": "Bundesministerium für Bildung, Familie, Senioren, Frauen und Jugend",
+"fundstelle": "BGBl. 2026 I Nr. 333 vom 09.11.2026",
+"sachgebiet": "Berufliche Bildung",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/333"
+},
+{
+"teil": "1",
+"year": 2026,
+"number": "332",
+"title": "Erste Verordnung zur Änderung der Bilanzbuchhalter-Bachelor Professional in Bilanzbuchhaltung-Fortbildungsprüfungsverordnung",
+"date": "2026-11-09",
+"typ": "Verordnung",
+"initiant": "Bundesministerium für Bildung, Familie, Senioren, Frauen und Jugend",
+"fundstelle": "BGBl. 2026 I Nr. 332 vom 09.11.2026",
+"sachgebiet": "Berufliche Bildung",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/332"
+},
+{
+"teil": "1",
+"year": 2026,
+"number": "331",
+"title": "Verordnung über die Festsetzung der Länderschlüsselzahlen und die Ermittlung der Schlüsselzahlen für die Aufteilung des Gemeindeanteils an der Umsatzsteuer nach § 5a des Gemeindefinanzreformgesetzes für die Jahre 2027, 2028 und 2029",
+"date": "2026-11-09",
+"typ": "Verordnung",
+"initiant": "Bundesministerium der Finanzen",
+"fundstelle": "BGBl. 2026 I Nr. 331 vom 09.11.2026",
+"sachgebiet": "Gemeindefinanzen",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/331"
+},
 {
 "teil": "1",
 "year": 2026,
@@ -5952,54 +6000,6 @@
 "fundstelle": "BGBl. 2025 I Nr. 219 vom 24.09.2025",
 "sachgebiet": "Luftverkehr",
 "link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/219"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "218",
-"title": "Bekanntmachung der Anordnung über die Übertragung von Befugnissen auf dem Gebiet des Disziplinarrechts im Bereich der Verwaltungs-Berufsgenossenschaft (VBG)",
-"date": "2025-09-23",
-"typ": "Sonstiges",
-"initiant": "Verwaltungs-Berufsgenossenschaft",
-"fundstelle": "BGBl. 2025 I Nr. 218 vom 23.09.2025",
-"sachgebiet": "Disziplinarrecht",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/218"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "217",
-"title": "Anordnung zur Änderung der Anordnung zur Übertragung beamtenrechtlicher Befugnisse und Zuständigkeiten im Bereich der Deutschen Post AG",
-"date": "2025-09-23",
-"typ": "Sonstiges",
-"initiant": "Deutsche Post AG",
-"fundstelle": "BGBl. 2025 I Nr. 217 vom 23.09.2025",
-"sachgebiet": "Beamte",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/217"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "216",
-"title": "Hinweis auf von Bundesrecht abweichendes Landesrecht (Land Rheinland-Pfalz)",
-"date": "2025-09-22",
-"typ": "Sonstiges",
-"initiant": "Sonstige",
-"fundstelle": "BGBl. 2025 I Nr. 216 vom 22.09.2025",
-"sachgebiet": "",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/216"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "215",
-"title": "Verordnung zur Vereinfachung der Durchführung und Genehmigung klinischer Prüfungen",
-"date": "2025-09-18",
-"typ": "Verordnung",
-"initiant": "Bundesministerium für Gesundheit",
-"fundstelle": "BGBl. 2025 I Nr. 215 vom 18.09.2025",
-"sachgebiet": "Apotheken- und Arzneimittelwesen, Gifte",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/215"
 }
 ]
 }
