@@ -162,21 +162,35 @@ jobs:
       pages: write
       id-token: write
       actions: read
+      contents: read
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      # Publish only code whose browser tests (tests.yml: Chromium, Firefox, WebKit) passed.
+      # Publish only code whose tests (tests.yml) passed: lint, Chromium and Firefox. WebKit does
+      # not block for now (owner, 2026-11-10), so its job is not waited for either. A commit that
+      # changes only files under .github/ changes nothing that is tested: its parent's tests count.
       # The tests run on every push; running them here as well would cost minutes for nothing.
       - name: Check that the tests passed for this version
         env:
           GH_TOKEN: ${{ github.token }}
+          repo: ${{ github.repository }}
+          sha: ${{ github.sha }}
         run: |
-          passed=$(gh api "repos/${{ github.repository }}/actions/workflows/tests.yml/runs?head_sha=${{ github.sha }}&status=success" --jq .total_count)
-          if [ "$passed" = "0" ]; then
-            echo "::error::The tests have not passed for ${{ github.sha }} – site not published."
-            exit 1
+          passed() {  # $1: commit – lint, Chromium and Firefox passed in its latest test run
+            run=$(gh api "repos/$repo/actions/workflows/tests.yml/runs?head_sha=$1&per_page=1" --jq '.workflow_runs[0].id // empty')
+            [ -n "$run" ] || return 1
+            n=$(gh api "repos/$repo/actions/runs/$run/jobs" --jq '[.jobs[] | select(.name == "lint" or .name == "test (chromium)" or .name == "test (firefox)") | select(.conclusion == "success")] | length')
+            [ "$n" = 3 ]
+          }
+          if passed "$sha"; then echo "The tests passed for $sha."; exit 0; fi
+          parent=$(gh api "repos/$repo/commits/$sha" --jq '.parents[0].sha')
+          only_ci=$(gh api "repos/$repo/compare/$parent...$sha" --jq '[.files[].filename | startswith(".github/")] | all')
+          if [ "$only_ci" = true ] && passed "$parent"; then
+            echo "Only .github/ changed since $parent, and its tests passed."; exit 0
           fi
+          echo "::error::The tests have not passed for $sha (lint, Chromium, Firefox) – site not published."
+          exit 1
 
       - id: deploy
         uses: actions/deploy-pages@v4

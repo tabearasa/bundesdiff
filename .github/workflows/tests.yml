@@ -17,7 +17,8 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # WebKit needed more than 30 minutes with the pages of spec 016
+    timeout-minutes: ${{ matrix.browser == 'webkit' && 50 || 30 }}
     # For now a failure in WebKit does not fail the run, so it does not stop the deployment of the
     # site (update.yml publishes only when this run passed) – owner, 2026-11-10. Its job still
     # shows the result.
