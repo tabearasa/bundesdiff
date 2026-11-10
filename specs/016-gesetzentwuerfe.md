@@ -187,6 +187,15 @@ the other sources (NAV-10). The help does the same under "Quellen und Grenzen".
 **ENT-17** The help explains the new terms in its "Kleines Wörterbuch": "Gesetzentwurf",
 "Drucksache", "Vorblatt und Begründung".
 
+**ENT-18** When an instruction inserts a new part of the law above the § – a Buch, Teil,
+Kapitel, Abschnitt, Unterabschnitt, Titel or Untertitel – together with its §§, the heading of
+that part stands as one line above the first of these §§, for example above "§ 135e
+Wiederherstellungssatzung" (Artikel 1 Nummer 49): "Neu: Achter Teil – Besondere Regelungen für
+städtische Ökosystemgebiete im Sinne des Artikels 8 der Verordnung (EU) 2024/1991". Nested
+parts get one line each, the outer one first. The heading is never dropped and never becomes
+part of the text of a § (owner, 2026-11-10). Publications use the same parser, so this holds
+for them too.
+
 ## Accessibility
 
 **ENT-A1** That a page is a bill is not shown by colour alone: the word "Entwurf" stands in
@@ -227,6 +236,14 @@ wording from the table above:
 3. Split sentences after "Satz 1.", "Absatz 3." and similar when a new sentence follows.
 4. Lists that NeuRIS delivers as table rows are read as Nummern.
 5. For bills the direction is always "berechnet" (ENT-8).
+6. Added 2026-11-10: "Nach § 135d wird der folgende Achte Teil eingefügt" (Artikel 1 Nummer 49,
+   likewise Nummer 65 with § 191a) was not understood, so § 135e and § 191a were missing. The
+   parser expected the word for the unit right after "der folgende". Older laws such as the
+   Baugesetzbuch count their parts with words ("Achter Teil"), newer ones with numbers
+   ("Teil 8", Handbuch der Rechtsförmlichkeit); both are read now. The headings in the quoted
+   text go with the § after them (ENT-18). Before, a heading between two new §§ ended up in the
+   text of the first one (BGBl. 2026 I Nr. 320, Artikel 5: "Unterabschnitt 2 Ausgehende
+   Ersuchen" at the end of § 91r). A new part without a § of its own is not evaluated.
 
 The line assembly for Drucksachen (finding 2) is part of the new PDF profile and is tested with
 the real lines of Art. 1 Nr. 27 a) aa).
@@ -240,6 +257,10 @@ Owner, 2026-11-09:
 3. Begründung and Vorblatt are not part of the comparison; they are kept under "Allgemeine
    Informationen" (ENT-11, ENT-12).
 4. The category is called "Gesetzentwürfe", as the Bundestag writes it.
+
+Owner, 2026-11-10:
+
+5. The heading of a new part of the law is shown above its first § (ENT-18).
 
 ## Open questions
 
@@ -258,8 +279,9 @@ listed are closed with what the requirements and proposals said:
 
 ## Result on the real bill
 
-With the engine fixes, 274 of the 335 instructions of Drucksache 21/6588 are shown in the
-comparison (before: 220 with the unchanged code, 265 with the line assembly alone). 60 are
-not evaluated (Inhaltsübersicht, Anlagen, headings of Teile, unknown wordings). One does not
+With the engine fixes, 276 of the 335 instructions of Drucksache 21/6588 are shown in the
+comparison (before: 220 with the unchanged code, 265 with the line assembly alone, 274 until
+the new Achter and Zehnter Teil of the Baugesetzbuch were read, fix 6). 58 are not evaluated
+(Inhaltsübersicht, Anlagen, changed headings of Teile, unknown wordings). One does not
 fit: Artikel 4 Nummer 12 "c) Satz 8 wird … ersetzt" – a slip in the bill itself, which should
 read "cc)" under Absatz 3. bundesdiff shows it as "nicht anwendbar" instead of guessing.

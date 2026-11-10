@@ -12,6 +12,14 @@
   "author": "der Bundesregierung",
   "laws": [
    {
+    "name": "Baugesetzbuch",
+    "abbr": "BauGB",
+    "full": "",
+    "articles": [
+     "1"
+    ]
+   },
+   {
     "name": "Raumordnungsgesetz",
     "abbr": "ROG",
     "full": "",

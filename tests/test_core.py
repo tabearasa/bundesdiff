@@ -309,3 +309,102 @@ b) Die bisherigen Nummern 4 und 5 werden zu den Nummern 5 und 6.
     # without the bill's fixed direction the engine still guesses, as for publications
     guessed = run(law, ins, Snapshots(lambda key: None), "pre")
     assert guessed.results[0].state == "post"
+
+
+# Drucksache 21/6588, Artikel 1 Nummer 49 – real lines, Absatz 1 shortened after its first sentence part
+BAUGB_NEW_TEIL = """
+49. Nach § 135d wird der folgende Achte Teil eingefügt:
+„Achter Teil
+Besondere Regelungen für städtische Ökosystemgebiete im Sinne des Artikels 8 der
+Verordnung (EU) 2024/1991
+§ 135e
+Wiederherstellungssatzung
+(1) Die Gemeinde kann für städtische Ökosystemgebiete im Sinne des Artikels 8 der Verordnung (EU)
+2024/1991 oder für Teile davon in einer Satzung ergänzende Vorgaben für die bauliche und sonstige Nutzung
+der Grundstücke treffen.“
+"""
+
+
+@pytest.mark.spec("ENT-18")
+def test_a_new_teil_counted_in_words_is_inserted_with_its_heading():
+    """"der folgende Achte Teil" was not understood: the parser wanted the word for the unit right
+    after "der folgende", so § 135e was missing from the Baugesetzbuch."""
+    law = Node("law", parts=[Node("par", "§ 135c", "Satzungen", parts=["Die Gemeinde kann durch Satzung regeln."]),
+                             Node("par", "§ 135d", "Ersatzgeld", parts=["Das Ersatzgeld wird erhoben."])])
+    ins = parse_instructions(lines(BAUGB_NEW_TEIL))
+    assert [(i.op, [(s.kind, s.keys) for s in i.path]) for i in ins] == [("insert_units", [("par", ["135d"])])]
+    result = run(law, ins, Snapshots(lambda key: None), "pre", force_state="pre")
+    assert [r.status for r in result.results] == ["applied"]
+    (new,) = result.pars
+    assert (new.key, new.before, new.after.heading) == ("§135e", None, "Wiederherstellungssatzung")
+    assert new.new_parts == ["Achter Teil – Besondere Regelungen für städtische Ökosystemgebiete im Sinne des "
+                             "Artikels 8 der Verordnung (EU) 2024/1991"]
+    assert "Achter Teil" not in new.after.full_text()
+    forward(law, ins[0])
+    assert [p.key for p in law.children] == ["§135c", "§135d", "§135e"]
+
+
+@pytest.mark.spec("ENT-18")
+def test_a_new_unterabschnitt_counted_in_words_before_a_par():
+    """BGBl. 2026 I Nr. 326, Artikel 1 Nummer 10 (Approbationsordnung für Ärzte), Absatz 1 shortened:
+    the same wording with "Vor" and the form "Erste"."""
+    ins = parse_instructions(lines("""
+10. Vor § 34 wird der folgende Erste Unterabschnitt eingefügt:
+„Erster Unterabschnitt
+Allgemeine Vorgaben für die einzureichenden Unterlagen
+§ 33a
+Allgemeine Vorgaben für die einzureichenden Unterlagen
+(1) Die nach diesem Abschnitt einzureichenden Unterlagen sind der zuständigen Behörde in Form von
+Abschriften vorzulegen oder elektronisch zu übermitteln.“
+"""))
+    assert [(i.op, [(s.kind, s.keys) for s in i.path], i.args.get("before")) for i in ins] == [
+        ("insert_units", [("par", ["34"])], True)]
+    (par,) = ins[0].args["quote"].tree().children
+    assert (par.key, par.heading) == ("§33a", "Allgemeine Vorgaben für die einzureichenden Unterlagen")
+    assert par.part_headings == ["Erster Unterabschnitt – Allgemeine Vorgaben für die einzureichenden Unterlagen"]
+
+
+@pytest.mark.spec("ENT-18")
+def test_headings_between_new_pars_go_with_the_par_after_them():
+    """BGBl. 2026 I Nr. 320, Artikel 5 Nummer 2 (Gesetz über die internationale Rechtshilfe in
+    Strafsachen), real lines, Absätze shortened: "Unterabschnitt 2 Ausgehende Ersuchen" was shown
+    at the end of § 91r instead of above § 91s."""
+    tree = tree_from_lines(lines("""
+Abschnitt 3
+Zusammenarbeit nach Maßgabe der Richtlinie (EU) 2024/1260
+Unterabschnitt 1
+Eingehende Ersuchen
+§ 91k
+Übermittlung von Informationen auf Ersuchen
+(1) Auf Ersuchen einer Vermögensabschöpfungsstelle eines Mitgliedstaates werden Informationen übermittelt.
+§ 91r
+Vorübergehende Sicherstellung von Vermögenswerten
+(4) Bei Gefahr im Verzug sind die gemäß Absatz 2 zuständigen staatsanwaltlichen Vermögensabschöpfungs­
+stellen befugt, die Sicherstellungsmaßnahmen nach Absatz 1 anzuordnen. § 111j Absatz 2 Satz 1 der Straf­
+prozessordnung findet keine Anwendung.
+Unterabschnitt 2
+Ausgehende Ersuchen
+§ 91s
+Ausgehende Ersuchen um Übermittlung von Informationen an Vermögensabschöpfungsstellen
+(1) Die deutschen Vermögensabschöpfungsstellen können ersuchen.
+"""))
+    k, r, s = tree.children
+    assert [p.key for p in tree.children] == ["§91k", "§91r", "§91s"]
+    assert tree.texts() == []
+    assert k.part_headings == ["Abschnitt 3 – Zusammenarbeit nach Maßgabe der Richtlinie (EU) 2024/1260",
+                               "Unterabschnitt 1 – Eingehende Ersuchen"]
+    assert r.part_headings == []
+    assert r.full_text().endswith("Strafprozessordnung findet keine Anwendung.")
+    assert s.part_headings == ["Unterabschnitt 2 – Ausgehende Ersuchen"]
+
+
+@pytest.mark.spec("ENT-18")
+def test_a_new_part_without_a_par_of_its_own_is_not_evaluated():
+    """Constructed: a quote with only the heading of a part has nothing to compare – it must not
+    turn into a § without a number."""
+    ins = parse_instructions(lines("""
+49. Nach § 135d wird der folgende Achte Teil eingefügt:
+„Achter Teil
+Besondere Regelungen für städtische Ökosystemgebiete“.
+"""))
+    assert [i.op for i in ins] == ["unsupported"]

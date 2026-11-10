@@ -37,6 +37,7 @@ LIST_LENGTH = 60  # spans more than one month
 # page stays below 32767 px even at 320 px width – Firefox cannot take a screenshot of a taller page:
 DRAFT = (21, 6588)
 DRAFT_ARTICLES = {
+    "1": "Baugesetzbuch: only Nummer 49, the new Achter Teil with § 135e – its heading stands above the § (ENT-18)",
     "4": "Raumordnungsgesetz: many instructions, some not shown, one that does not fit (a slip in the bill), "
          "law changed after the bill; of its 14 §§ only those of DRAFT_PARS are kept",
     "5": "Verwaltungsgerichtsordnung: one change, law from gesetze-im-internet.de, changed after the bill",
@@ -44,7 +45,8 @@ DRAFT_ARTICLES = {
     "12": "Investitionsvorranggesetz: an Artikel with a single instruction",
     "13": "Inkrafttreten: text with placeholders instead of dates",
 }
-DRAFT_PARS = {"4": ["§3", "§6", "§27"]}
+DRAFT_PARS = {"1": ["§135e"], "4": ["§3", "§6", "§27"]}
+DRAFT_INSTRUCTIONS = {"1": ["49."]}  # Artikel → the instructions kept (others: all)
 # part → number of sections kept (None: all); of each section the first DRAFT_PARAGRAPHS paragraphs
 DRAFT_INFO = {"vorblatt": 2, "allgemein": 2, "artikel-4": 5, "artikel-5": None, "artikel-6": None,
               "artikel-12": None, "artikel-13": None}
@@ -89,6 +91,9 @@ def draft() -> None:
         if a["number"] in DRAFT_PARS:
             a["pars"] = [p for p in a["pars"] if p["key"] in DRAFT_PARS[a["number"]]]
             assert len(a["pars"]) == len(DRAFT_PARS[a["number"]]), f"Artikel {a['number']}: a § of DRAFT_PARS is missing"
+        if a["number"] in DRAFT_INSTRUCTIONS:
+            a["instructions"] = [i for i in a["instructions"] if i["marker"] in DRAFT_INSTRUCTIONS[a["number"]]]
+            assert len(a["instructions"]) == len(DRAFT_INSTRUCTIONS[a["number"]]), f"Artikel {a['number']}: an instruction is missing"
     instructions = [i for a in result["articles"] for i in a.get("instructions") or []]
     result["counts"] = {"shown": sum(i["status"] == "applied" for i in instructions), "total": len(instructions)}
     parts = []

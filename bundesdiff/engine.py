@@ -750,6 +750,7 @@ class ParDiff:
     after: Node | None
     state: str
     source_note: str = ""
+    new_parts: list[str] = field(default_factory=list)  # "Achter Teil – …" begun by a new § (ENT-18)
 
 
 @dataclass
@@ -814,9 +815,15 @@ def run(law: Node, instructions: list[Instruction], snaps: Snapshots, default_st
             for k in affected_pars(ins):
                 key_state.setdefault(k, states[key])
 
+    # headings of new parts of the law that the quoted text puts above a new § (spec 016 ENT-18)
+    new_parts = {n.key: n.part_headings for ins in instructions
+                 if ins.op in ("insert_units", "append_units") and "quote" in ins.args
+                 and results[id(ins)].status in ("applied", "consolidated")
+                 for n in _quote_nodes(ins) if n.kind == "par" and n.part_headings}
     pars: list[ParDiff] = []
     for key, state in key_state.items():
         b = find_par(before_law, key)
         a = find_par(after_law, key)
-        pars.append(ParDiff(key, b[0] if b else None, a[0] if a else None, state, snaps.used.get(key, "")))
+        pars.append(ParDiff(key, b[0] if b else None, a[0] if a else None, state, snaps.used.get(key, ""),
+                            [] if b else new_parts.get(key, [])))
     return AmendmentResult([results[id(i)] for i in instructions], pars)

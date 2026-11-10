@@ -133,8 +133,8 @@ def test_notice_comes_before_any_comparison(app):
 def test_each_amended_law_is_compared_with_its_current_text(app, page):
     page.set_viewport_size(VIEWPORTS["desktop"])
     app(BILL)
-    expect(page.locator(".article")).to_have_count(5)
-    expect(page.locator(".glance-laws li")).to_have_count(4)
+    expect(page.locator(".article")).to_have_count(6)
+    expect(page.locator(".glance-laws li")).to_have_count(5)
     for name in ("Raumordnungsgesetz", "Verwaltungsgerichtsordnung", "Investitionsvorranggesetz"):
         expect(article(page, re.compile(name)).locator("table.diff").first).to_be_attached()
     heads = article(page, re.compile("Verwaltungsgerichtsordnung")).locator("table.diff.split thead th")
@@ -185,7 +185,7 @@ def test_each_law_names_the_version_compared_with(app):
 def test_page_says_how_much_is_shown(app):
     page = app(BILL)
     expect(page.locator(".pub-header .shown-count")).to_have_text(re.compile(
-        r"40 von 46\sÄnderungen werden im Vergleich gezeigt\. "
+        r"41 von 47\sÄnderungen werden im Vergleich gezeigt\. "
         r"Die übrigen finden Sie bei jedem Gesetz unter „Wortlaut im Entwurf“\."))
 
 
@@ -384,7 +384,7 @@ def test_reading_settings_work_on_a_bill(app, page):
 def test_links_to_the_top_and_contents_bar_speak_of_the_bill(app, page):
     page.set_viewport_size(VIEWPORTS["desktop"])
     app(BILL)
-    expect(page.get_by_role("link", name="Zum Anfang des Entwurfs")).to_have_count(4)
+    expect(page.get_by_role("link", name="Zum Anfang des Entwurfs")).to_have_count(5)
     expect(page.get_by_role("navigation", name="Inhalt dieses Entwurfs")).to_be_visible()
     page.get_by_role("link", name="Zum Anfang des Entwurfs").last.click()
     expect(page.locator(".pub-header h1")).to_be_focused()
@@ -508,3 +508,16 @@ def test_layout_of_a_bill_with_everything_expanded(app, page, viewport):
     page.locator(".article details.other summary").click()
     issues = layout_issues(page)
     assert not issues, "\n".join(issues)
+
+
+@pytest.mark.spec("ENT-18")
+def test_heading_of_a_new_teil_stands_above_its_first_par(app):
+    page = app(BILL)
+    title = page.get_by_role("heading", name="§ 135e Wiederherstellungssatzung")
+    par = article(page, re.compile("Baugesetzbuch")).locator("section.par").filter(has=title)
+    line = par.locator(".new-part")
+    expect(line).to_have_text("Neu: Achter Teil – Besondere Regelungen für städtische Ökosystemgebiete im Sinne "
+                              "des Artikels 8 der Verordnung (EU) 2024/1991")
+    assert line.bounding_box()["y"] + line.bounding_box()["height"] <= title.bounding_box()["y"]
+    expect(par.locator("table.diff")).not_to_contain_text("Achter Teil")
+    expect(page.locator(".new-part")).to_have_count(1)  # only where the bill inserts a new part

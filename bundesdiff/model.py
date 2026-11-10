@@ -53,6 +53,16 @@ def join_lines(lines: list[str]) -> str:
 
 LEVELS = {"law": 0, "par": 1, "abs": 2, "nr": 3, "bst": 4, "dbst": 5, "tbst": 6}
 
+# Parts of a law above the § ("Gliederungseinheiten" in the Handbuch der Rechtsförmlichkeit). Older
+# laws such as the Baugesetzbuch count them in words ("Achter Teil"), newer ones in numbers ("Teil 8").
+STRUCTURE_UNITS = r"(?:Buch|Teil|Kapitel|Unterkapitel|Abschnitt|Unterabschnitt|Titel|Untertitel)"
+ORDINAL = (r"(?:Erst|Zweit|Dritt|Viert|Fünft|Sechst|Siebent|Siebt|Acht|Neunt|Zehnt|Elft|Zwölft|"
+           r"(?:Drei|Vier|Fünf|Sech|Sieb|Acht|Neun)zehnt|"
+           r"(?:(?:Ein|Zwei|Drei|Vier|Fünf|Sechs|Sieben|Acht|Neun)und(?:zwanzig|dreißig|vierzig|fünfzig)|"
+           r"Zwanzig|Dreißig|Vierzig|Fünfzig)st)(?:er|es|en|e)")
+_STRUCTURE_LINE = re.compile(rf"^(?:{ORDINAL}\s+{STRUCTURE_UNITS}|{STRUCTURE_UNITS}\s+(?:\d+[a-z]*|[IVXLC]+))$")
+_PAR_LINE = re.compile(r"^(§\s*\d+[a-z]*|Artikel\s+\d+[a-z]*)$")
+
 LABEL_RES = [
     ("abs", re.compile(r"^\((\d+[a-z]*)\)")),
     ("nr", re.compile(r"^(\d+[a-z]*)\.(?=\s|$)")),
@@ -105,6 +115,8 @@ class Node:
     label: str = ""
     heading: str = ""
     parts: list = field(default_factory=list)  # str | Node
+    # a new §: headings of the new parts of the law that begin with it, outer first (spec 016 ENT-18)
+    part_headings: list[str] = field(default_factory=list)
 
     @property
     def key(self) -> str:
@@ -277,6 +289,8 @@ def tree_from_lines(lines: list[tuple[float, str]], root_kind: str = "block") ->
         for e in stack:
             flush(e)
 
+    part_headings: list[str] = []  # "Achter Teil – …" waiting for the § that begins the part
+
     i = 0
     while i < len(lines):
         x, text = lines[i]
@@ -284,7 +298,23 @@ def tree_from_lines(lines: list[tuple[float, str]], root_kind: str = "block") ->
         i += 1
         if not text:
             continue
-        par = re.match(r"^(§\s*\d+[a-z]*|Artikel\s+\d+[a-z]*)$", text)
+        if _STRUCTURE_LINE.match(text):
+            # the heading of a new part of the law: its title lines, then a § or a part inside it
+            j = i
+            while j < len(lines) and j - i < 4:
+                nxt = lines[j][1].strip()
+                if _PAR_LINE.match(nxt) or _STRUCTURE_LINE.match(nxt) or parse_label(nxt):
+                    break
+                j += 1
+            nxt = lines[j][1].strip() if j < len(lines) else ""
+            if _PAR_LINE.match(nxt) or _STRUCTURE_LINE.match(nxt):
+                flush_all()
+                del stack[1:]
+                title = join_lines([t for _, t in lines[i:j]])
+                part_headings.append(f"{normalize(text)} – {normalize(title)}" if title else normalize(text))
+                i = j
+                continue
+        par = _PAR_LINE.match(text)
         if par:
             flush_all()
             del stack[1:]
@@ -293,6 +323,7 @@ def tree_from_lines(lines: list[tuple[float, str]], root_kind: str = "block") ->
                 heading = lines[i][1].strip()
                 i += 1
             node = Node("par", normalize(par.group(1)), normalize(heading))
+            node.part_headings, part_headings = part_headings, []
             root.parts.append(node)
             stack.append([node, x, []])
             continue

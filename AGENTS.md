@@ -134,8 +134,8 @@ uv run pytest tests/frontend --browser firefox     # or webkit
    (from the citation such as "BGBl. I S. 1870", or its name) and parses the numbered
    instruction list ("1.", "a)", "aa)", nested "wird wie folgt geändert:") into operations:
    word-level replacement/deletion/insertion; replacement/insertion/deletion/appending of
-   Absätze, Nummern, Buchstaben and whole §§; sentence-level changes; new headings;
-   renumbering.
+   Absätze, Nummern, Buchstaben and whole §§ (a § that begins a new Teil or Abschnitt keeps its
+   heading, shown above it); sentence-level changes; new headings; renumbering.
 4. **Current law text** (`sources.py`): NeuRIS (`testphase.rechtsinformationen.bund.de`,
    LegalDocML) when the law is there, otherwise gesetze-im-internet.de.
 5. **Before or after?** (`engine.py`): the consolidated text is often updated within a day, so

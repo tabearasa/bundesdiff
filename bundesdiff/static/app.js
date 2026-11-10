@@ -902,8 +902,11 @@ function statBar(stats) {
 }
 
 function renderPar(p, article) {
+  // the heading of a new part of the law ("Achter Teil – …") stands above its first § (spec 016 ENT-18)
+  const newParts = (p.newParts || []).map((t) => `<p class="new-part">Neu: ${esc(t)}</p>`).join("");
   const section = el(`
     <section class="par">
+      ${newParts}
       <header>
         <h3>${esc(p.title)}</h3>
         <div class="par-meta">

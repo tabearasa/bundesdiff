@@ -17,7 +17,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-from .model import Node, join_lines, normalize, tree_from_lines
+from .model import ORDINAL, STRUCTURE_UNITS, Node, join_lines, normalize, tree_from_lines
 from .pdftext import Line
 
 # --------------------------------------------------------------------------
@@ -279,9 +279,13 @@ OPS = {
 
 _MARKER = re.compile(r"^((?:\d+[a-z]?\.)|(?:[a-z]{1,3}\)))\s+")
 _PUNCT = {"Punkt": ".", "Komma": ",", "Semikolon": ";", "Doppelpunkt": ":"}
-_NOUN = (r"(?:Absatz|Absätze|Satz|Sätze|Nummer|Nummern|Buchstabe|Buchstaben|Doppelbuchstabe|Doppelbuchstaben|"
+# "der folgende Achte Teil": a part of the law may be counted in words before its name (spec 016 ENT-18)
+_NOUN = (rf"(?:{ORDINAL}\s+)?"
+         r"(?:Absatz|Absätze|Satz|Sätze|Nummer|Nummern|Buchstabe|Buchstaben|Doppelbuchstabe|Doppelbuchstaben|"
          r"Dreifachbuchstabe|Dreifachbuchstaben|§|§§|Artikel|Überschrift|Angabe|Angaben|Teil|Abschnitt|"
-         r"Unterabschnitt|Kapitel|Zeile|Zeilen|Spalte|Anlage|Anhang|Tabelle|Fußnote|Eintrag|Einträge)")
+         r"Unterabschnitt|Kapitel|Unterkapitel|Buch|Titel|Untertitel|Zeile|Zeilen|Spalte|Anlage|Anhang|"
+         r"Tabelle|Fußnote|Eintrag|Einträge)")
+_PART_NOUN = re.compile(rf"^(?:{ORDINAL}\s+)?{STRUCTURE_UNITS}\b")
 
 
 def marker_level(marker: str) -> int:
@@ -434,6 +438,8 @@ def _parse_sentence(sentence: str, quotes: list[Quote], context: list[Step]) -> 
                                                      "before": m.group(1) == "Vor"}
         if last.kind in ("toc", "anlage", "heading"):
             return "unsupported", anchor, {}
+        if _PART_NOUN.match(m.group(3)) and not any(n.kind == "par" for n in quotes[-1].tree().children):
+            return "unsupported", anchor, {}  # a new part of the law without a § of its own: nothing to compare
         return "insert_units", anchor, {"quote": quotes[-1], "before": m.group(1) == "Vor"}
 
     m = re.match(rf"^(?:(?:Dem|Der|Den) (.*?) (?:wird|werden) (?:der|die|das)? ?(?:folgenden?|neuen?) ({_NOUN}.*?)|"

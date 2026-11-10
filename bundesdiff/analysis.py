@@ -168,6 +168,7 @@ def article_entry(art, *, state_of, snapshots_of, force_state: str | None = None
             "stats": stats(rows),
             "isNew": pd.before is None,
             "isRemoved": pd.after is None,
+            **({"newParts": pd.new_parts} if pd.new_parts else {}),  # spec 016 ENT-18
         })
     return entry
 
