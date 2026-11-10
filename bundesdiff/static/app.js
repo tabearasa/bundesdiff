@@ -743,11 +743,17 @@ function renderContents(articles) {
     <li><a href="#art-${i}" data-jump="art-${i}">${esc(articleLabel(a))}
       <span class="muted count">– ${(a.pars || []).length ? plural(a.pars.length, "Vorschrift", "Vorschriften") : "nur im Wortlaut"}</span></a></li>`);
   const first = articles.find((a) => a.kind === "amendment");
+  // every name in the same place, unseen: the bar is as high as its longest name and never makes
+  // the text below jump while it follows the reader (NAV-8)
+  const sizer = articles.filter((a) => a.kind === "amendment").map((a) => `<span>${esc(articleLabel(a))}</span>`);
   return el(`
     <nav class="toc-bar" aria-label="${words().contents}">
       <div class="toc-row">
         <span class="toc-label">Sie lesen:</span>
-        <span class="toc-current">${esc(articleLabel(first))}</span>
+        <span class="toc-name">
+          <span class="toc-current">${esc(articleLabel(first))}</span>
+          <span class="toc-sizer" aria-hidden="true">${sizer.join("")}</span>
+        </span>
         <button class="toc-toggle" aria-expanded="false" aria-controls="toc-list">Inhalt<span aria-hidden="true"> ▾</span></button>
       </div>
       <ol class="toc-list" id="toc-list" hidden>${items.join("")}</ol>

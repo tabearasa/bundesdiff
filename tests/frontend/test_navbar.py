@@ -277,6 +277,22 @@ def test_contents_bar_follows_the_reader(app, page, viewport):
     expect(current).to_contain_text("Tabaksteuergesetz")
 
 
+@pytest.mark.spec("NAV-8")
+@pytest.mark.parametrize("viewport", ["small", "phone"])
+def test_contents_bar_keeps_its_height_while_following_the_reader(app, page, viewport):
+    """The label wrapped to one more line when a longer law came up: the bar grew, all text below it
+    jumped by a line, and Safari stopped scrolling to the end of a bill halfway (WebKit, 2026-11-10)."""
+    page.set_viewport_size(VIEWPORTS[viewport])
+    app("#/entwurf/21/6588")  # its laws have names of very different lengths
+    bar = page.get_by_role("navigation", name="Inhalt dieses Entwurfs")
+    heights = set()
+    for article in page.locator(".article").all():
+        article.evaluate("e => e.scrollIntoView({block: 'start'})")
+        page.wait_for_timeout(150)  # the contents bar updates on the next animation frame
+        heights.add(round(bar.bounding_box()["height"]))
+    assert len(heights) == 1, f"the contents bar changed its height while scrolling: {sorted(heights)} px"
+
+
 @pytest.mark.spec("NAV-9", "NAV-A3")
 def test_each_law_ends_with_a_link_to_the_top(app):
     page = app(TABAK)

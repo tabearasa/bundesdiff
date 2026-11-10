@@ -294,7 +294,11 @@ button, label, select { -webkit-hyphens: manual; hyphens: manual; overflow-wrap:
 }
 .toc-row { max-width: 1180px; margin: 0 auto; display: flex; align-items: center; gap: 4px 12px; }
 .toc-label { font-variant: small-caps; letter-spacing: .05em; color: var(--accent); white-space: nowrap; }
-.toc-current { flex: 1; min-width: 0; font-size: 17px; line-height: 1.3; }
+.toc-name { flex: 1; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); font-size: 17px; line-height: 1.3; }
+/* NAV-8: all names in one cell, only the current one seen – the bar keeps the height of the longest */
+.toc-current, .toc-sizer, .toc-sizer > span { grid-area: 1 / 1; }
+.toc-current { align-self: center; }
+.toc-sizer { display: grid; grid-template-columns: minmax(0, 1fr); visibility: hidden; }
 .toc-toggle {
   border: 1px solid var(--frame); background: var(--paper); border-radius: 3px; padding: 3px 12px; cursor: pointer;
   font-size: 17px; font-variant: small-caps; letter-spacing: .04em; white-space: nowrap;
