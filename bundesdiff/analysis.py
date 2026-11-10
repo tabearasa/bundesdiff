@@ -124,6 +124,54 @@ def _par_title(node: Node | None, key: str) -> str:
     return " ".join(x for x in (node.label, node.heading) if x)
 
 
+def article_entry(art, *, state_of, snapshots_of, force_state: str | None = None) -> dict:
+    """One Artikel as JSON: its text, or – if it amends a law – the instructions and the comparison.
+
+    ``state_of(ref)``: whether the law text presumably contains the changes already ("pre"/"post");
+    ``snapshots_of(ref)``: where earlier versions of a § come from; ``force_state``: see engine.run.
+    """
+    entry: dict = {"number": art.number, "heading": art.heading, "kind": "other", "text": art.text}
+    am = analyze_article(art)
+    if am is None:
+        return entry
+    entry.update({"kind": "amendment", "lawName": am.law_name, "intro": am.intro})
+    try:
+        ref = resolve_law(am)
+    except Exception as e:  # noqa: BLE001
+        log.exception("resolve law")
+        ref = None
+        entry["error"] = f"Fehler bei der Suche des Gesetzes: {e}"
+    if ref is None:
+        entry.setdefault("error", f"„{am.law_name}“ wurde in der Rechtsinformationsplattform nicht gefunden.")
+        entry["instructions"] = [
+            {"marker": i.marker, "raw": i.raw, "op": i.op, "opLabel": OPS.get(i.op, i.op),
+             "location": i.location, "status": "unsupported", "state": None, "message": ""}
+            for i in am.instructions]
+        entry["pars"] = []
+        return entry
+    law = sources.load_law(ref)
+    result = run(law, am.instructions, snapshots_of(ref), state_of(ref), force_state=force_state)
+    entry.update({
+        "law": {"name": ref.name, "shortName": ref.alternate_name, "abbreviation": ref.abbreviation,
+                "source": ref.source, "version": ref.version, "url": ref.url},
+        "instructions": [_instruction_json(r) for r in result.results],
+        "pars": [],
+    })
+    for pd in result.pars:
+        rows = diff_units(pd.before, pd.after)
+        entry["pars"].append({
+            "key": pd.key,
+            "title": _par_title(pd.after or pd.before, pd.key),
+            "state": pd.state,
+            "source": pd.source_note,
+            "rows": rows,
+            "stats": stats(rows),
+            "isNew": pd.before is None,
+            "isRemoved": pd.after is None,
+        })
+    return entry
+
+
 def analyze(teil: str, year: int, number: str) -> dict:
     pub = sources.find_publication(teil, year, number)
     pdf = sources.fetch_pdf(pub)
@@ -134,52 +182,10 @@ def analyze(teil: str, year: int, number: str) -> dict:
         issued = dt.date.fromisoformat(pub.date[:10])
     issued = issued or law_date or dt.date.today()
 
-    articles = []
-    for art in doc.articles:
-        entry: dict = {"number": art.number, "heading": art.heading, "kind": "other", "text": art.text}
-        am = analyze_article(art)
-        if am is None:
-            articles.append(entry)
-            continue
-        entry.update({"kind": "amendment", "lawName": am.law_name, "intro": am.intro})
-        try:
-            ref = resolve_law(am)
-        except Exception as e:  # noqa: BLE001
-            log.exception("resolve law")
-            ref = None
-            entry["error"] = f"Fehler bei der Suche des Gesetzes: {e}"
-        if ref is None:
-            entry.setdefault("error", f"„{am.law_name}“ wurde in der Rechtsinformationsplattform nicht gefunden.")
-            entry["instructions"] = [
-                {"marker": i.marker, "raw": i.raw, "op": i.op, "opLabel": OPS.get(i.op, i.op),
-                 "location": i.location, "status": "unsupported", "state": None, "message": ""}
-                for i in am.instructions]
-            entry["pars"] = []
-            articles.append(entry)
-            continue
-        law = sources.load_law(ref)
-        # Wayback snapshots must predate the day the issue was published
-        snaps = Snapshots(_snapshot_fetcher(ref, issued - dt.timedelta(days=1)))
-        result = run(law, am.instructions, snaps, default_state(ref, pub, law_date))
-        entry.update({
-            "law": {"name": ref.name, "shortName": ref.alternate_name, "abbreviation": ref.abbreviation,
-                    "source": ref.source, "version": ref.version, "url": ref.url},
-            "instructions": [_instruction_json(r) for r in result.results],
-            "pars": [],
-        })
-        for pd in result.pars:
-            rows = diff_units(pd.before, pd.after)
-            entry["pars"].append({
-                "key": pd.key,
-                "title": _par_title(pd.after or pd.before, pd.key),
-                "state": pd.state,
-                "source": pd.source_note,
-                "rows": rows,
-                "stats": stats(rows),
-                "isNew": pd.before is None,
-                "isRemoved": pd.after is None,
-            })
-        articles.append(entry)
+    # Wayback snapshots must predate the day the issue was published
+    articles = [article_entry(art, state_of=lambda ref: default_state(ref, pub, law_date),
+                              snapshots_of=lambda ref: Snapshots(_snapshot_fetcher(ref, issued - dt.timedelta(days=1))))
+                for art in doc.articles]
 
     return {
         "publication": {

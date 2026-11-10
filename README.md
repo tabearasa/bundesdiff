@@ -54,13 +54,27 @@ GitHub Actions runs them in Chromium, Firefox and WebKit on every push.
    to get the old wording.
 5. Show old and new wording side by side, with the changed words marked.
 
+## Gesetzentwürfe (prototype)
+
+Besides published laws, bundesdiff shows one bill that is still before the Bundestag:
+[Drucksache 21/6588](https://dserver.bundestag.de/btd/21/065/2106588.pdf), the bill to modernise
+planning law (Baugesetzbuch and eleven other laws). A bill has the same form as a law, so the
+same steps apply – with one difference: a bill is never in force, so the law as it stands is
+always the "before" side and the bill's wording the "after" side. The page says clearly that it
+is a draft, names the law version it was compared with, and keeps the bill's own summary and
+reasoning (Vorblatt, Begründung) apart from the comparison.
+
+Which bills are shown is a hand-kept list, `bundesdiff/entwuerfe.txt`. bundesdiff does not
+follow what happens to a bill after its date. Details: [specs/016-gesetzentwuerfe.md](specs/016-gesetzentwuerfe.md).
+
 ## Limitations
 
 * Tables of contents, annexes, tables and items like "Nummer 7.2.1" are listed but not applied.
 * Completely new laws and announcements are shown as plain text.
 * Unusual wording can make an instruction fail; it is then marked **fehlgeschlagen**.
 * When the old wording comes from an Internet Archive snapshot, the page says from which day.
-* **Not legally binding.** Only the official Bundesgesetzblatt is authoritative.
+* **Not legally binding.** Only the official Bundesgesetzblatt is authoritative; for a bill,
+  only the Drucksache of the Bundestag.
 
 ## Legal basis of the data use
 

@@ -75,7 +75,8 @@ split across lines without a hyphen. They run at 320 px (smallest phone), phone,
 (contrast, labels, ARIA, landmarks).
 
 New fields in the analysis JSON: rebuild the test data with
-`uv run python tests/frontend/make_fixtures.py` (see the list of fixtures in that file).
+`uv run python tests/frontend/make_fixtures.py` (see the list of fixtures in that file); only
+the bill of spec 016 with `… make_fixtures.py entwuerfe`.
 
 ## Other
 
@@ -111,6 +112,7 @@ uv run pytest tests/frontend --browser firefox     # or webkit
   failed requests.
   * `test_phone.py`: phone layout (round buttons, menu, timeline as a lens), blurred page
     behind windows, shapes of controls (specs 004, 005, 007).
+  * `test_entwuerfe.py`: Gesetzentwürfe – the list of bills and the page of a bill (spec 016).
   * `test_behaviour.py`: what readers do: search, filter, open a publication, switch views,
     fold, tabs, dialogs, light/dark, phone layout, keyboard, browser back, live API mode.
   * `test_layout.py`: every kind of page at every screen size, light and dark, 200 %/400 %
@@ -146,6 +148,18 @@ uv run pytest tests/frontend --browser firefox     # or webkit
 The background watcher of `serve` analyzes each new issue soon after it appears, so the
 affected laws are stored *before* they are consolidated and later views use exact local old
 versions instead of archive snapshots.
+
+## Gesetzentwürfe (bills, spec 016)
+
+A prototype with a hand-kept list: `bundesdiff/entwuerfe.txt` names Drucksachen of the Bundestag
+(`21/6588`). `drucksache.py` reads the PDF (the bill starts at its title followed by "Vom ..."
+and ends at the bold heading "Begründung"; lines are assembled left to right because the
+opening quotation mark hangs left of the label). `drafts.py` analyses it with the same parser
+and engine as a publication, with the direction fixed: the current law text is always the
+"before" side, nothing is calculated backwards. Vorblatt and Begründung are stored apart
+(`…-info.json`) and loaded only when the reader opens a part. `bundesdiff export` analyses each
+listed bill once and keeps the result in the store under `drafts/`. Bills are not tracked
+after their date, not searched and not on the timeline.
 
 ## Daily update workflow
 

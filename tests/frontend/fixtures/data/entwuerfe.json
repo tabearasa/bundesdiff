@@ -1,0 +1,48 @@
+[
+ {
+  "id": "21/6588",
+  "wp": 21,
+  "number": 6588,
+  "analyzed": true,
+  "failed": false,
+  "pdf": "https://dserver.bundestag.de/btd/21/065/2106588.pdf",
+  "title": "Entwurf eines Gesetzes zur Modernisierung des Städtebau- und Raumordnungsrechts",
+  "date": "2026-06-22",
+  "kind": "Gesetzentwurf",
+  "author": "der Bundesregierung",
+  "laws": [
+   {
+    "name": "Raumordnungsgesetz",
+    "abbr": "ROG",
+    "full": "",
+    "articles": [
+     "4"
+    ]
+   },
+   {
+    "name": "Verwaltungsgerichtsordnung",
+    "abbr": "VwGO",
+    "full": "",
+    "articles": [
+     "5"
+    ]
+   },
+   {
+    "name": "Honorarordnung für Architekten und Ingenieure",
+    "abbr": "HOAI",
+    "full": "Verordnung über die Honorare für Architekten- und Ingenieurleistungen",
+    "articles": [
+     "6"
+    ]
+   },
+   {
+    "name": "Investitionsvorranggesetz",
+    "abbr": "InVorG",
+    "full": "Gesetz über den Vorrang für Investitionen bei Rückübertragungsansprüchen nach dem Vermögensgesetz",
+    "articles": [
+     "12"
+    ]
+   }
+  ]
+ }
+]

@@ -75,9 +75,10 @@ colours, without a visible word; screen readers hear "Menü", "So funktioniert's
 "Suchen". There is no navbar.
 
 **PTL-6** The menu button opens a small window above it with the logo (link to the start
-page), "Veröffentlichungen", "Über bundesdiff" and the light/dark switch (NAV-11). The
+page), "Veröffentlichungen", "Gesetzentwürfe" (spec 016), "Über bundesdiff" and the light/dark switch (NAV-11). The
 current page is marked as in NAV-2. `Esc`, the close button (SHAPE-7) or a tap outside close
-it.
+it. The same menu is opened by "Menü" in a navbar too narrow for the names of the pages
+(NAV-3); it then opens at the top of the screen.
 
 **PTL-7** The help button opens the help ("So funktioniert bundesdiff"), the search button
 the search window (SRCH-2).

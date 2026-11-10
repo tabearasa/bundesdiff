@@ -6,6 +6,9 @@ The analyses are precomputed and written as JSON files next to the frontend:
     site/data/meta.json
     site/data/publications-1.json, publications-2.json
     site/data/<teil>/<year>/<number>.json
+    site/data/entwuerfe.json                       bills (spec 016)
+    site/data/entwurf/<wp>/<number>.json           one bill: the comparison
+    site/data/entwurf/<wp>/<number>-info.json      its Vorblatt and Begründung
 """
 
 from __future__ import annotations
@@ -21,8 +24,8 @@ from xml.etree import ElementTree as ET
 
 import httpx
 
+from . import drafts, sources, store
 from . import listing as list_entry
-from . import sources, store
 from .analysis import analyze
 
 log = logging.getLogger(__name__)
@@ -132,10 +135,31 @@ def export(site: Path, days: int = 365, max_new: int = 50, retry_hours: float = 
         _write_json(site / "data" / f"publications-{teil}.json", listing)
         list_fetched = min(list_fetched or fetched, fetched)
 
+    try:
+        # a few hand-listed bills: a failed analysis is tried again on every run
+        draft_totals = export_drafts(site, retry_hours=0)
+    except Exception:  # noqa: BLE001 – the bills must never stop the daily build of the publications
+        log.exception("bills")
+        draft_totals = {"analyzed": 0, "failed": 0, "error": True}
     _write_json(site / "data" / "meta.json", {"generated": dt.datetime.now(dt.UTC).isoformat(timespec="minutes"),
                                               "listFetched": list_fetched, "since": cutoff})
     build_frontend(site)
-    return {**totals, "fromSavedList": from_saved, "listFetched": list_fetched}
+    return {**totals, "fromSavedList": from_saved, "listFetched": list_fetched, "drafts": draft_totals}
+
+
+def export_drafts(site: Path, retry_hours: float = 24) -> dict:
+    """The bills of ``entwuerfe.txt``: analysed once, then written from the store."""
+    totals = drafts.update(retry_hours)
+    for wp, number in drafts.listed():
+        result = drafts.load(wp, number)
+        if result is None:
+            continue
+        _write_json(site / "data" / "entwurf" / str(wp) / f"{number}.json", result)
+        info = drafts.load(wp, number, "-info")
+        if info is not None and not result.get("error"):
+            _write_json(site / "data" / "entwurf" / str(wp) / f"{number}-info.json", info)
+    _write_json(site / "data" / "entwuerfe.json", drafts.entries())
+    return totals
 
 
 def build_frontend(site: Path) -> None:

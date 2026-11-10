@@ -14,7 +14,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import listing, sources, store
+from . import drafts, listing, sources, store
 from .analysis import analyze
 
 log = logging.getLogger("bundesdiff")
@@ -100,6 +100,33 @@ def publication(teil: str, year: int, number: str, refresh: bool = False) -> dic
     except Exception as e:  # noqa: BLE001
         log.exception("analysis %s/%s/%s", teil, year, number)
         raise HTTPException(500, f"Auswertung fehlgeschlagen: {e}") from e
+
+
+@app.get("/api/entwuerfe")
+def bills() -> list[dict]:
+    return drafts.entries()
+
+
+@app.get("/api/entwuerfe/{wp}/{number}")
+def bill(wp: int, number: int) -> dict:
+    with _locks_guard:
+        lock = _locks.setdefault(f"entwurf/{wp}/{number}", threading.Lock())
+    try:
+        with lock:
+            return drafts.get(wp, number)
+    except LookupError as e:
+        raise HTTPException(404, str(e)) from e
+    except Exception as e:  # noqa: BLE001
+        log.exception("bill %s/%s", wp, number)
+        raise HTTPException(500, f"Auswertung fehlgeschlagen: {e}") from e
+
+
+@app.get("/api/entwuerfe/{wp}/{number}/info")
+def bill_info(wp: int, number: int) -> dict:
+    info = drafts.load(wp, number, "-info") if (wp, number) in drafts.listed() else None
+    if info is None:
+        raise HTTPException(404, f"Zu Drucksache {wp}/{number} sind keine allgemeinen Informationen gespeichert")
+    return info
 
 
 @app.get("/")

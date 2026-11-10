@@ -8,10 +8,13 @@ import pytest
 from playwright.sync_api import Page, expect
 
 from .conftest import VIEWPORTS
+from .test_layout import layout_issues
 
 # the phone layout has no navbar, but round buttons (spec 004, PTL-1)
 WITH_NAVBAR = [v for v in VIEWPORTS if v not in ("phone", "small")]
 LOW_PHONE = {"width": 320, "height": 400}  # narrow but too low for the phone layout
+LOW_WIDE = {"width": 600, "height": 400}  # as low, and wide enough for the short names of the pages
+ZOOMED = {"width": 320, "height": 200}  # 1280×800 at 400 %
 
 TABAK = "#/1/2026/309"  # changes two laws
 SMALL_ORDINANCE = "#/1/2026/306"  # changes one law
@@ -38,8 +41,9 @@ def scroll_to(page: Page, selector: str) -> None:
 @pytest.mark.spec("NAV-1")
 def test_navbar_entries_in_order(app):
     page = app()
-    entries = nav(page).locator("a, button")
-    expect(entries).to_have_text([re.compile(r"§\s*bundesdiff"), "Veröffentlichungen", "So funktioniert's",
+    entries = nav(page).locator("a:visible, button:visible")  # "Menü" only shows on narrow screens (NAV-3)
+    expect(entries).to_have_text([re.compile(r"§\s*bundesdiff"), "Veröffentlichungen", "Gesetzentwürfe",
+                                  "So funktioniert's",
                                   "Über bundesdiff", re.compile(r"Suchen"), ""], use_inner_text=True)
     expect(entries.last).to_have_role("switch")
     expect(nav(page).get_by_role("link", name="bundesdiff – Startseite")).to_have_attribute("href", "#/")
@@ -90,11 +94,90 @@ def test_navbar_fits_at_every_width(app, page):
         assert size[2] <= 56, f"{width}px: navbar {size[2]}px high"
 
 
-@pytest.mark.spec("NAV-3")
-def test_short_labels_on_phones_keep_full_names(app, page):
+@pytest.mark.spec("NAV-3", "ENT-A2")
+def test_narrow_navbar_has_the_pages_in_the_menu(app, page):
+    """The names of four pages do not fit at 320 px beside the logo, the help, the search and the
+    switch (Firefox: 368 px of entries for 304 px). There they are in the menu, behind "Menü"."""
     page.set_viewport_size(LOW_PHONE)
     app()
-    expect(nav(page).locator("a, button")).to_have_text(["§", "Liste", "Hilfe", "Über", "", ""], use_inner_text=True)
+    expect(nav(page).locator("a:visible, button:visible")).to_have_text(["§", "Menü", "Hilfe", "", ""],
+                                                                       use_inner_text=True)
+    button = nav(page).get_by_role("button", name="Menü")
+    expect(button).to_have_attribute("aria-expanded", "false")
+    button.click()
+    menu = page.get_by_role("dialog", name="Menü")
+    expect(menu).to_be_visible()
+    expect(button).to_have_attribute("aria-expanded", "true")
+    expect(menu.get_by_role("link")).to_have_text(
+        [re.compile("bundesdiff"), "Veröffentlichungen", "Gesetzentwürfe", "Über bundesdiff"], use_inner_text=True)
+    expect(menu.get_by_role("link", name="Veröffentlichungen")).to_have_attribute("aria-current", "page")
+    # at the top, where its entry is, and all of it on the screen
+    page.wait_for_function("document.getElementById('menu').getAnimations().every(a => a.playState !== 'running')")
+    box = menu.bounding_box()
+    assert box["y"] < 60 and box["x"] >= 0, box
+    assert box["x"] + box["width"] <= LOW_PHONE["width"] and box["y"] + box["height"] <= LOW_PHONE["height"], box
+    assert page.evaluate("document.getElementById('menu').contains(document.activeElement)")
+    # a page is chosen: the menu closes, the page is marked in it the next time
+    menu.get_by_role("link", name="Gesetzentwürfe").click()
+    expect(page.get_by_role("heading", level=1, name="Gesetzentwürfe")).to_be_visible()
+    expect(menu).to_be_hidden()
+    expect(button).to_have_attribute("aria-expanded", "false")
+    button.click()
+    expect(menu.get_by_role("link", name="Gesetzentwürfe")).to_have_attribute("aria-current", "page")
+    expect(menu.get_by_role("link", name="Veröffentlichungen")).not_to_have_attribute("aria-current", "page")
+    # Esc closes it and the focus is back on "Menü"
+    page.keyboard.press("Escape")
+    expect(menu).to_be_hidden()
+    expect(button).to_be_focused()
+    expect(button).to_have_attribute("aria-expanded", "false")
+    # the close button does the same
+    button.click()
+    menu.get_by_role("button", name="Schließen").click()
+    expect(menu).to_be_hidden()
+    expect(button).to_be_focused()
+
+
+@pytest.mark.spec("NAV-3", "A11Y-1", "A11Y-4")
+@pytest.mark.parametrize("theme", ["light", "dark"])
+@pytest.mark.parametrize("size", [LOW_PHONE, ZOOMED, {"width": 470, "height": 400}],
+                         ids=["low-phone", "zoom-400", "470px"])
+def test_menu_of_the_narrow_navbar_fits_the_screen(app, page, size, theme):
+    """Also on a screen lower than the menu (400 % zoom): it stays on the screen and scrolls."""
+    page.set_viewport_size(size)
+    app(TABAK, theme=theme)
+    nav(page).get_by_role("button", name="Menü").click()
+    menu = page.get_by_role("dialog", name="Menü")
+    expect(menu).to_be_visible()
+    page.wait_for_function("document.getElementById('menu').getAnimations().every(a => a.playState !== 'running')")
+    box = menu.bounding_box()
+    assert box["x"] >= 0 and box["y"] >= 0, box
+    assert box["x"] + box["width"] <= size["width"] and box["y"] + box["height"] <= size["height"], box
+    issues = layout_issues(page)
+    assert not issues, "\n".join(issues)
+    # every entry can be reached, the last one too
+    switch = menu.get_by_role("switch", name="Dunkle Ansicht")
+    switch.scroll_into_view_if_needed()
+    expect(switch).to_be_in_viewport()
+    switch.click()
+    expect(switch).to_have_attribute("aria-checked", "true" if theme == "light" else "false")
+
+
+@pytest.mark.spec("NAV-3")
+def test_wider_navbar_keeps_the_pages_in_the_bar(app, page):
+    """480 px and wider: the names fit, there is no "Menü"."""
+    page.set_viewport_size({"width": 480, "height": 400})
+    app()
+    expect(nav(page).get_by_role("button", name="Menü")).to_have_count(0)
+    expect(nav(page).locator("a:visible, button:visible")).to_have_text(
+        ["§", "Liste", "Entwürfe", "Hilfe", "Über", "", ""], use_inner_text=True)
+
+
+@pytest.mark.spec("NAV-3")
+def test_short_labels_keep_full_names(app, page):
+    page.set_viewport_size(LOW_WIDE)
+    app()
+    expect(nav(page).locator("a:visible, button:visible")).to_have_text(
+        ["§", "Liste", "Entwürfe", "Hilfe", "Über", "", ""], use_inner_text=True)
     expect(nav(page).get_by_role("button", name="Suchen")).to_be_visible()
     expect(nav(page).get_by_role("link", name="bundesdiff – Startseite")).to_be_visible()
     expect(nav(page).get_by_role("switch", name="Dunkle Ansicht")).to_be_visible()

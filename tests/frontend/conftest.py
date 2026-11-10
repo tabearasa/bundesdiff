@@ -45,6 +45,8 @@ PAGES = {
     "not-analyzed": "#/1/2026/322",
     "gii-source": "#/1/2026/311",  # a law from gesetze-im-internet.de (source badge)
     "about": "#/ueber",
+    "bills": "#/entwuerfe",  # spec 016: the list of bills
+    "bill": "#/entwurf/21/6588",  # one bill: comparison with the current law, general information closed
     "old-data": "#/",  # the start page, opened at LATER (see NOW_FOR_ROUTE)
 }
 # routes opened at another time than NOW; "#/" is reserved for "old-data" – other tests open
@@ -107,5 +109,5 @@ def app(page: Page, base_url: str, problems: list[str]):
 
 
 def wait_rendered(page: Page, route: str) -> None:
-    page.locator("#main .timeline, #main .pub-header, #main .error-box, #main .about").first.wait_for()
+    page.locator("#main .timeline, #main .pub-header, #main .error-box, #main .about, #main .bill-list").first.wait_for()
     page.evaluate("document.fonts.ready")

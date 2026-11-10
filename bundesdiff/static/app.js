@@ -38,6 +38,10 @@ const api = {
   publication: (teil, year, number, refresh) => STATIC
     ? `data/${teil}/${year}/${encodeURIComponent(number)}.json`
     : `/api/publications/${teil}/${year}/${encodeURIComponent(number)}${refresh ? "?refresh=true" : ""}`,
+  // bills (spec 016)
+  bills: () => STATIC ? "data/entwuerfe.json" : "/api/entwuerfe",
+  bill: (wp, number) => STATIC ? `data/entwurf/${wp}/${number}.json` : `/api/entwuerfe/${wp}/${number}`,
+  billInfo: (wp, number) => STATIC ? `data/entwurf/${wp}/${number}-info.json` : `/api/entwuerfe/${wp}/${number}/info`,
 };
 
 const state = {
@@ -47,8 +51,11 @@ const state = {
   view: localGet("view") || "split",
   onlyChanges: localGet("onlyChanges") !== "0",
   pubs: [],
-  current: null, // analysis result
+  current: null, // analysis result – of a publication, or of a bill (then with .draft)
   currentId: null,
+  bills: null, // the list of bills, once loaded
+  info: null, // Vorblatt and Begründung of the bill on screen, once asked for (a promise) …
+  infoParts: null, // … and once loaded
 };
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -56,6 +63,8 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
 const PUBLICATION_ROUTE = /^#\/(1)\/(\d{4})\/([^/]+)$/;
 const ABOUT_ROUTE = "#/ueber";
+const BILLS_ROUTE = "#/entwuerfe";
+const BILL_ROUTE = /^#\/entwurf\/(\d{1,2})\/(\d{1,5})$/;
 
 function localGet(key) {
   try { return localStorage.getItem("bundesdiff." + key); } catch { return null; }
@@ -641,6 +650,14 @@ function lawLabel(a) {
   return law.abbreviation ? `${short} (${law.abbreviation})` : short;
 }
 
+/** The same as markup: the abbreviation is never hyphenated ("(In-/VorG)", "(32. BIm-/SchV)"). */
+function lawLabelHTML(a) {
+  const law = a.law;
+  if (!law) return esc(a.lawName || a.heading);
+  const short = law.shortName && law.shortName !== law.name ? law.shortName : law.name;
+  return law.abbreviation ? `${esc(short)} <span class="abbr">(${esc(law.abbreviation)})</span>` : esc(short);
+}
+
 function renderPublication() {
   const { publication: pub, articles } = state.current;
   const main = $("#main");
@@ -665,7 +682,7 @@ function renderPublication() {
           <dt>Was ändert sich?</dt>
           <dd>${amendments.length
             ? `<ul class="glance-laws">${articles.map((a, i) => a.kind === "amendment" ? `
-                <li><a href="#" data-jump="art-${i}">${esc(lawLabel(a))}</a>
+                <li><a href="#" data-jump="art-${i}">${lawLabelHTML(a)}</a>
                   <span class="muted count">– ${(a.pars || []).length
                     ? plural(a.pars.length, "Vorschrift", "Vorschriften")
                     : "nur im Wortlaut"}</span></li>` : "").join("")}</ul>`
@@ -727,7 +744,7 @@ function renderContents(articles) {
       <span class="muted count">– ${(a.pars || []).length ? plural(a.pars.length, "Vorschrift", "Vorschriften") : "nur im Wortlaut"}</span></a></li>`);
   const first = articles.find((a) => a.kind === "amendment");
   return el(`
-    <nav class="toc-bar" aria-label="Inhalt dieser Veröffentlichung">
+    <nav class="toc-bar" aria-label="${words().contents}">
       <div class="toc-row">
         <span class="toc-label">Sie lesen:</span>
         <span class="toc-current">${esc(articleLabel(first))}</span>
@@ -794,7 +811,7 @@ function renderOther(a, i) {
       <details class="other">
         <summary>
           ${a.number ? `<div class="art-no">Artikel ${esc(a.number)}</div>` : ""}
-          <h2>${esc(a.heading || "Text der Veröffentlichung")}</h2>
+          <h2>${esc(a.heading || words().text)}</h2>
           <span class="muted">Text anzeigen</span>
         </summary>
         <div class="plain">${esc(a.text)}</div>
@@ -807,18 +824,19 @@ function renderAmendment(a, i) {
   const card = el(`
     <article class="article" id="art-${i}">
       <header>
-        <div class="art-no">${a.number ? `Artikel ${esc(a.number)} · ` : ""}Geändert wird</div>
-        <h2 tabindex="-1">${esc(lawLabel(a))}</h2>
+        <div class="art-no">${a.number ? `Artikel ${esc(a.number)} · ` : ""}${words().changed}</div>
+        <h2 tabindex="-1">${lawLabelHTML(a)}</h2>
         ${law ? `<div class="law-line">
           ${law.shortName && law.name !== law.shortName ? `<span>${esc(law.name)}</span>` : ""}
-          <span class="badge source" title="Woher der aktuelle Gesetzestext stammt">aktueller Text: ${law.source === "gii" ? `<span class="domain">gesetze-im-internet.de</span>` : "Rechtsinformationsportal (NeuRIS)"}, Stand ${esc(formatDate(law.version))}</span>
+          ${isDraft() ? "" : `<span class="badge source" title="Woher der aktuelle Gesetzestext stammt">aktueller Text: ${law.source === "gii" ? `<span class="domain">gesetze-im-internet.de</span>` : "Rechtsinformationsportal (NeuRIS)"}, Stand ${esc(formatDate(law.version))}</span>`}
           <a href="${esc(law.url)}" target="_blank" rel="noopener">Ganzes Gesetz ansehen</a>
         </div>` : ""}
+        ${law && isDraft() ? `<p class="compared">Verglichen mit der Fassung vom\u00a0${esc(formatDate(law.version))}.${law.newerThanDraft ? " Das Gesetz wurde nach dem Entwurf noch geändert. Einzelne Änderungen passen deshalb vielleicht nicht mehr." : ""}</p>` : ""}
       </header>
       ${a.error ? `<div class="error">${esc(a.error)} Die Änderungen werden deshalb nur im Wortlaut angezeigt.</div>` : ""}
       <div class="tabs" role="tablist">
-        <button role="tab" id="tab-${i}-synopse" aria-controls="body-${i}-synopse" aria-selected="true" data-tab="synopse" class="active" title="Gegenüberstellung von bisherigem und neuem Text">Vorher / Nachher<span class="count">${(a.pars || []).length}</span></button>
-        <button role="tab" id="tab-${i}-befehle" aria-controls="body-${i}-befehle" aria-selected="false" tabindex="-1" data-tab="befehle" title="So steht die Änderung wörtlich im Gesetzblatt">Wortlaut im Gesetzblatt<span class="count">${(a.instructions || []).length}</span></button>
+        <button role="tab" id="tab-${i}-synopse" aria-controls="body-${i}-synopse" aria-selected="true" data-tab="synopse" class="active" title="Gegenüberstellung von bisherigem und neuem Text">${words().compareTab}<span class="count">${(a.pars || []).length}</span></button>
+        <button role="tab" id="tab-${i}-befehle" aria-controls="body-${i}-befehle" aria-selected="false" tabindex="-1" data-tab="befehle" title="${words().wordingTitle}">${words().wordingTab}<span class="count">${(a.instructions || []).length}</span></button>
       </div>
       <div class="tab-body" role="tabpanel" id="body-${i}-synopse" aria-labelledby="tab-${i}-synopse" data-body="synopse"></div>
       <div class="tab-body" role="tabpanel" id="body-${i}-befehle" aria-labelledby="tab-${i}-befehle" data-body="befehle" hidden></div>
@@ -826,18 +844,18 @@ function renderAmendment(a, i) {
 
   const syn = $('[data-body="synopse"]', card);
   if (a.pars && a.pars.length) a.pars.forEach((p) => syn.appendChild(renderPar(p, a)));
-  else syn.appendChild(el(`<p class="no-pars">Für dieses Gesetz konnte keine Gegenüberstellung erzeugt werden. Unter „Wortlaut im Gesetzblatt“ sehen Sie die Änderungen so, wie sie veröffentlicht wurden.</p>`));
+  else syn.appendChild(el(`<p class="no-pars">${words().noPars}</p>`));
   const cmd = $('[data-body="befehle"]', card);
-  cmd.appendChild(el(`<p class="tab-intro">Gesetzesänderungen werden als Anweisungen formuliert („… wird durch … ersetzt“). Hier steht jede Anweisung im Originalwortlaut – und ob <span class="name">bundesdiff</span> sie anwenden konnte.</p>`));
+  cmd.appendChild(el(`<p class="tab-intro">${words().wordingIntro}</p>`));
   cmd.appendChild(renderInstructions(a.instructions || []));
-  card.appendChild(el(`<a class="to-start" href="#" data-action="top">↑ Zum Anfang der Veröffentlichung</a>`));
+  card.appendChild(el(`<a class="to-start" href="#" data-action="top">${words().top}</a>`));
   return card;
 }
 
 function renderInstructions(list) {
   const ol = el(`<ol class="instructions"></ol>`);
   for (const ins of list) {
-    const st = STATUS[ins.status] || STATUS.unsupported;
+    const st = statusOf(ins.status);
     ol.appendChild(el(`
       <li>
         <span class="marker">${esc(ins.marker)}</span>
@@ -932,7 +950,7 @@ function renderDiff(rows) {
   // Layout like a code review: a narrow gutter with −/+ before each text column
   table.innerHTML = split
     ? `<colgroup><col class="gutter"><col><col class="gutter"><col></colgroup>
-       <thead class="diff-head"><tr><th colspan="2">Vorher · bisheriger Text</th><th colspan="2">Nachher · neuer Text</th></tr></thead>`
+       <thead class="diff-head"><tr><th colspan="2">${words().before}</th><th colspan="2">${words().after}</th></tr></thead>`
     : `<colgroup><col class="gutter"><col></colgroup>
        <thead class="diff-head"><tr><th colspan="2">Text mit markierten Änderungen</th></tr></thead>`;
   const cols = split ? 4 : 2;
@@ -986,6 +1004,250 @@ function renderDiff(rows) {
   return table;
 }
 
+// ---------------------------------------------------------------- bills (spec 016)
+
+/** A bill (Gesetzentwurf) is on screen: the comparison then speaks of the bill, not of a publication. */
+const isDraft = () => Boolean(state.current?.draft);
+
+// What the comparison is called for a publication and for a bill (ENT-7)
+const WORDS = {
+  publication: {
+    before: "Vorher · bisheriger Text", after: "Nachher · neuer Text",
+    compareTab: "Vorher / Nachher", wordingTab: "Wortlaut im Gesetzblatt", wordingTitle: "So steht die Änderung wörtlich im Gesetzblatt",
+    wordingIntro: "Gesetzesänderungen werden als Anweisungen formuliert („… wird durch … ersetzt“). Hier steht jede Anweisung im Originalwortlaut – und ob <span class=\"name\">bundesdiff</span> sie anwenden konnte.",
+    noPars: "Für dieses Gesetz konnte keine Gegenüberstellung erzeugt werden. Unter „Wortlaut im Gesetzblatt“ sehen Sie die Änderungen so, wie sie veröffentlicht wurden.",
+    top: "↑ Zum Anfang der Veröffentlichung", contents: "Inhalt dieser Veröffentlichung", text: "Text der Veröffentlichung",
+    changed: "Geändert wird",
+  },
+  draft: {
+    before: "Geltender Text", after: "Text nach dem Entwurf",
+    compareTab: "Geltend / Entwurf", wordingTab: "Wortlaut im Entwurf", wordingTitle: "So steht die Änderung wörtlich im Entwurf",
+    wordingIntro: "Gesetzesänderungen werden als Anweisungen formuliert („… wird durch … ersetzt“). Hier steht jede Anweisung im Originalwortlaut des Entwurfs – und ob <span class=\"name\">bundesdiff</span> sie anwenden konnte.",
+    noPars: "Für dieses Gesetz konnte kein Vergleich erzeugt werden. Unter „Wortlaut im Entwurf“ sehen Sie die Änderungen so, wie sie im Entwurf stehen.",
+    top: "↑ Zum Anfang des Entwurfs", contents: "Inhalt dieses Entwurfs", text: "Text des Entwurfs",
+    changed: "Soll geändert werden",
+  },
+};
+const words = () => WORDS[isDraft() ? "draft" : "publication"];
+
+// For a bill nothing is calculated backwards (ENT-8), and "das Gesetz im Internet" is the law in force
+const DRAFT_STATUS = {
+  applied: {
+    label: "im Vergleich gezeigt",
+    title: "bundesdiff hat diese Änderung in den geltenden Gesetzestext eingearbeitet.",
+  },
+  failed: {
+    label: "nicht anwendbar",
+    title: "Diese Änderung passte nicht zum geltenden Gesetzestext und konnte nicht dargestellt werden.",
+  },
+  unsupported: STATUS.unsupported,
+};
+const statusOf = (s) => (isDraft() ? DRAFT_STATUS[s] : STATUS[s]) || STATUS.unsupported;
+
+const billHref = (b) => `#/entwurf/${b.wp}/${b.number}`;
+/** 21/6588 → …/btd/21/065/2106588.pdf: the address of a Drucksache follows from its number. */
+const billPdf = (wp, number) => `https://dserver.bundestag.de/btd/${wp}/${String(number).padStart(5, "0").slice(0, 3)}/${wp}${String(number).padStart(5, "0")}.pdf`;
+const billPdfLink = (wp, number) => `<a href="${esc(billPdf(wp, number))}" target="_blank" rel="noopener">Drucksache beim Deutschen Bundestag (PDF, externe Seite)</a>`;
+/** "Gesetzentwurf der Bundesregierung" */
+const billKind = (b) => [b.kind || "Gesetzentwurf", b.author].filter(Boolean).join(" ");
+
+function startPage(id) {
+  state.currentId = id;
+  state.current = null;
+  showContents(null);
+  const main = $("#main");
+  main.innerHTML = "";
+  main.scrollTop = 0;
+  window.scrollTo(0, 0);
+  return main;
+}
+
+/** The list of bills (ENT-2, ENT-3). */
+async function openBills() {
+  const main = startPage("entwuerfe");
+  const page = el(`
+    <section class="welcome bills">
+      <h1 tabindex="-1">Gesetzentwürfe</h1>
+      <p class="lead">Ein Gesetzentwurf ist ein Vorschlag für ein neues Gesetz. Er gilt noch nicht. Der Bundestag kann ihn ändern oder ablehnen.</p>
+      <p><span class="name">bundesdiff</span> zeigt, was ein Entwurf an den geltenden Gesetzen ändern würde: den geltenden Text und den Text nach dem Entwurf nebeneinander. Bisher ist das ein Versuch mit einem einzigen Entwurf.</p>
+      <div class="bills-body"><p class="loading-line" role="status">Die Liste wird geladen …</p></div>
+    </section>`);
+  main.appendChild(page);
+  const body = $(".bills-body", page);
+  let bills;
+  try {
+    bills = state.bills || (state.bills = await getJSON(api.bills()));
+  } catch (e) {
+    if (state.currentId !== "entwuerfe") return;
+    body.innerHTML = `<div class="error-box"><strong>Die Liste der Gesetzentwürfe konnte nicht geladen werden.</strong><br>Bitte laden Sie die Seite später noch einmal.</div>`;
+    return;
+  }
+  if (state.currentId !== "entwuerfe") return;
+  body.innerHTML = bills.length ? `
+    <p class="list-count">${plural(bills.length, "Gesetzentwurf", "Gesetzentwürfe")}</p>
+    <ol class="bill-list">${bills.map((b) => `
+      <li>
+        <p class="bill-meta">Drucksache\u00a0${esc(b.wp)}/${esc(b.number)}${b.date ? `\u00a0· ${esc(formatDate(b.date))}` : ""}${b.analyzed ? `\u00a0· ${esc(billKind(b))}` : ""}</p>
+        <a class="bill-title" href="${billHref(b)}">${esc(b.title || `Drucksache ${b.wp}/${b.number}`)}</a>
+        ${b.analyzed
+          ? ((b.laws || []).length ? `<p class="bill-laws">Würde ändern: ${b.laws.map((l) => esc(l.name)).join(" · ")}</p>` : "")
+          : `<p class="bill-laws">Dieser Entwurf ist noch nicht ausgewertet.</p>`}
+      </li>`).join("")}
+    </ol>` : `<p class="tl-empty">Zurzeit zeigt <span class="name">bundesdiff</span> keinen Gesetzentwurf.</p>`;
+}
+
+/** The page of one bill. */
+async function openBill(wp, number) {
+  const id = `entwurf/${wp}/${number}`;
+  const main = startPage(id);
+  main.appendChild(el(`<div class="loading"><div class="spinner" aria-hidden="true"></div><p role="status">Der Gesetzentwurf wird geladen …</p></div>`));
+  let data;
+  try {
+    data = await getJSON(api.bill(wp, number));
+    if (data.error || !data.draft) throw new Error(data.error || "keine Daten");
+  } catch (e) {
+    const problem = await billProblem(wp, number);
+    if (state.currentId === id) main.innerHTML = problem;
+    return;
+  }
+  if (state.currentId !== id) return;
+  state.current = data;
+  state.info = null;
+  state.infoParts = null;
+  try {
+    renderDraft();
+  } catch (e) {
+    console.error(e);
+    main.innerHTML = `<div class="error-box"><strong>Diese Seite konnte wegen eines Fehlers in <span class="name">bundesdiff</span> nicht angezeigt werden.</strong><br>Bitte versuchen Sie es später noch einmal. Den Entwurf selbst finden Sie hier: ${billPdfLink(wp, number)}</div>`;
+  }
+}
+
+/** Why a bill cannot be shown – what happened, and what the reader can do (ENT-15). */
+async function billProblem(wp, number) {
+  let listed = null; // not known while the list cannot be loaded either
+  try {
+    state.bills = state.bills || await getJSON(api.bills());
+    listed = state.bills.some((b) => +b.wp === wp && +b.number === number);
+  } catch { /* the bill itself may still be there */ }
+  // an address that is none of the bills shown here (mistyped, or the bill was taken off the list)
+  if (listed === false) return `<div class="error-box"><strong>Diesen Gesetzentwurf zeigt <span class="name">bundesdiff</span> nicht.</strong><br>Bisher sind hier nur einzelne Gesetzentwürfe zu sehen. <a href="${BILLS_ROUTE}">Zur Liste der Gesetzentwürfe</a></div>`;
+  return `<div class="error-box"><strong>Dieser Gesetzentwurf kann gerade nicht angezeigt werden.</strong><br>Bitte versuchen Sie es später noch einmal. Den Entwurf selbst finden Sie hier: ${billPdfLink(wp, number)}</div>`;
+}
+
+function renderDraft() {
+  const { draft, articles, counts } = state.current;
+  const main = $("#main");
+  const amendments = articles.filter((a) => a.kind === "amendment");
+  const inForce = articles.filter((a) => a.kind !== "amendment" && isInForce(a));
+  // ENT-13: a bill has placeholders instead of dates ("am … [einsetzen: Datum …]")
+  const undated = inForce.some((a) => /\[einsetzen|…|\.\.\./.test(a.text || ""));
+  const open = new Set($$(".bill-info details[open]").map((d) => d.dataset.info)); // kept when a reading setting changes
+
+  main.innerHTML = "";
+  showContents(amendments.length > 1 ? renderContents(articles) : null);
+  main.appendChild(el(`
+    <section class="pub-header bill-header">
+      <div class="fundstelle" title="So wird dieser Entwurf zitiert">Drucksache ${esc(draft.wp)}/${esc(draft.number)}</div>
+      <h1 tabindex="-1">${esc(draft.title)}</h1>
+      <div class="date"><span class="typ typ-entwurf">Entwurf</span> – ${esc(billKind(draft))}${draft.date ? ` vom ${esc(formatDate(draft.date))}` : ""}</div>
+      <p class="draft-notice"><strong>Dies ist ein Entwurf.</strong> Er gilt nicht. Der Bundestag kann ihn noch ändern oder ablehnen. <span class="name">bundesdiff</span> zeigt den Stand${draft.date ? ` vom ${esc(formatDate(draft.date))}` : " der Drucksache"} und verfolgt nicht, was danach mit dem Entwurf geschehen ist.</p>
+
+      <dl class="glance">
+        <div>
+          <dt>Was würde sich ändern?</dt>
+          <dd>${amendments.length
+            ? `<ul class="glance-laws">${articles.map((a, i) => a.kind === "amendment" ? `
+                <li><a href="#" data-jump="art-${i}">${lawLabelHTML(a)}</a>
+                  <span class="muted count">– ${(a.pars || []).length
+                    ? plural(a.pars.length, "Vorschrift", "Vorschriften")
+                    : "nur im Wortlaut"}</span></li>` : "").join("")}</ul>`
+            : `Keine Änderungen an bestehenden Gesetzen erkannt – zum Beispiel, weil der Entwurf ein ganz neues Gesetz vorschlägt. Den Text finden Sie unten.`}</dd>
+        </div>
+        ${inForce.length ? `<div><dt>Ab wann würde das gelten?</dt><dd>${undated
+          ? "Im Entwurf steht noch kein Datum. Es wird erst eingesetzt, wenn das Gesetz beschlossen und verkündet ist."
+          : inForce.map((a) => esc(withoutSignatures(a.text))).join("<br>")}</dd></div>` : ""}
+        <div><dt>Von wem?</dt><dd>${esc(billKind(draft))}${draft.date ? ` vom ${esc(fullDate(draft.date))}` : ""}</dd></div>
+      </dl>
+
+      ${counts && counts.total ? `<p class="shown-count">${esc(counts.shown)} von ${plural(counts.total, "Änderung wird", "Änderungen werden")} im Vergleich gezeigt.${counts.shown < counts.total ? " Die übrigen finden Sie bei jedem Gesetz unter „Wortlaut im Entwurf“." : ""}</p>` : ""}
+      <div class="links">${billPdfLink(draft.wp, draft.number)}</div>
+      <p class="binding">Maßgeblich ist allein die Drucksache des Deutschen Bundestages.</p>
+    </section>`));
+
+  const info = renderInfoList(open);
+  if (info) main.appendChild(info);
+  if (amendments.some((a) => (a.pars || []).length)) main.appendChild(renderReadingSettings());
+  articles.forEach((a, i) => main.appendChild(a.kind === "amendment" ? renderAmendment(a, i) : renderOther(a, i)));
+  if (!amendments.length) main.appendChild(el(`<button class="to-top" data-action="top">${words().top}</button>`));
+  updateStickyHeight();
+  followReader();
+}
+
+/** "Allgemeine Informationen" (ENT-12): Vorblatt and Begründung, apart from the comparison, closed at first.
+ *  `open`: the parts that were open before the page was drawn anew. */
+function renderInfoList(open = new Set()) {
+  const { draft, info } = state.current;
+  if (!info || !info.length) return null;
+  const section = el(`
+    <section class="bill-info" aria-labelledby="bill-info-title">
+      <h2 id="bill-info-title">Allgemeine Informationen</h2>
+      <p class="info-note">Zu jedem Gesetzentwurf gehören eine Zusammenfassung und eine Begründung. Sie stehen hier im Wortlaut: Text ${esc(draft.author || "der Verfasser des Entwurfs")}, nicht von <span class="name">bundesdiff</span>. Tabellen und Fußnoten fehlen hier; vollständig stehen sie in der Drucksache.</p>
+      ${info.map((p) => `<details data-info="${esc(p.id)}"><summary><span class="info-title">${esc(p.title)}</span></summary><div class="info-body"></div></details>`).join("")}
+    </section>`);
+  for (const part of $$("details", section)) {
+    if (open.has(part.dataset.info)) {
+      part.open = true;
+      // at once, not after the next request: the reader's place on the page must not move (A11Y-8)
+      if (state.infoParts) showInfo(part, state.infoParts);
+    }
+    part.addEventListener("toggle", () => { if (part.open) fillInfo(part); });
+  }
+  return section;
+}
+
+const infoMissing = (draft) => `<p class="info-missing">Dieser Text konnte nicht geladen werden. Sie finden ihn hier: ${billPdfLink(draft.wp, draft.number)}</p>`;
+
+/** The text of one part, loaded when the reader opens it: together the parts are larger than the comparison. */
+async function fillInfo(part) {
+  const body = $(".info-body", part);
+  if (body.dataset.filled) return;
+  const { draft } = state.current;
+  const id = state.currentId;
+  if (!state.infoParts) {
+    body.innerHTML = `<p class="loading-line" role="status">Der Text wird geladen …</p>`;
+    try {
+      state.info = state.info || getJSON(api.billInfo(draft.wp, draft.number));
+      const data = await state.info;
+      if (state.currentId !== id) return; // the reader went on to another page meanwhile
+      if (!data || !Array.isArray(data.parts)) throw new Error("keine Daten");
+      state.infoParts = data.parts;
+    } catch (e) {
+      if (state.currentId !== id) return;
+      state.info = null; // opening the part again tries again
+      body.innerHTML = infoMissing(draft);
+      return;
+    }
+  }
+  showInfo(part, state.infoParts);
+}
+
+function showInfo(part, parts) {
+  const body = $(".info-body", part);
+  const found = parts.find((p) => p.id === part.dataset.info);
+  if (!found || !Array.isArray(found.sections)) {
+    body.innerHTML = infoMissing(state.current.draft);
+    return;
+  }
+  // headings below "Allgemeine Informationen" (h2): the highest rank of the part is h3
+  const top = Math.min(...found.sections.filter((s) => s.heading).map((s) => s.level), 6);
+  // escWithDomains: an address in the text ("https://doi.org/…") is never hyphenated (A11Y-5)
+  body.innerHTML = found.sections.map((s) => {
+    const h = Math.min(3 + Math.max(0, s.level - top), 6);
+    return `${s.heading ? `<h${h}>${escWithDomains(s.heading)}</h${h}>` : ""}${(s.paragraphs || []).map((p) => `<p>${escWithDomains(p)}</p>`).join("")}`;
+  }).join("");
+  body.dataset.filled = "1";
+}
+
 // ---------------------------------------------------------------- explanations
 
 /** The button or link the reader last pressed: windows give the focus back to it when they close. */
@@ -1016,7 +1278,11 @@ function showHow(p, article) {
   const parLabel = p.title.split(" ").slice(0, 2).join(" "); // "§ 38"
   const related = (article.instructions || []).filter((i) => i.location === parLabel || (i.location || "").startsWith(parLabel + " "));
   let how;
-  if (p.state === "post") {
+  if (isDraft()) {
+    how = `<p>Der geltende Text von <strong>${esc(p.title)}</strong> stammt von ${src} (Stand ${esc(formatDate(law.version))}).
+      Er bildet die linke Spalte „Geltender Text“.</p>
+      <p>Die rechte Spalte „Text nach dem Entwurf“ hat <span class="name">bundesdiff</span> <strong>selbst berechnet</strong>, indem es die Anweisungen aus dem Entwurf auf diesen Text angewendet hat.</p>`;
+  } else if (p.state === "post") {
     how = `<p>Der aktuelle Text von <strong>${esc(p.title)}</strong> auf ${src} (Stand ${esc(formatDate(law.version))})
       <strong>enthält diese Änderung bereits</strong>. Er bildet deshalb die rechte Spalte „Nachher“.</p>
       <p>Die linke Spalte „Vorher“ wurde <strong>zurückgerechnet</strong>: Die Anweisungen aus dem Gesetzblatt wurden rückwärts
@@ -1033,10 +1299,11 @@ function showHow(p, article) {
   }
   const list = related.length
     ? `<h3>Angewendete Anweisungen</h3><ol class="how-list">${related.map((i) =>
-        `<li>${highlightQuotes(i.raw)} <span class="badge ${esc(i.status)}">${esc((STATUS[i.status] || STATUS.unsupported).label)}</span></li>`).join("")}</ol>`
+        `<li>${highlightQuotes(i.raw)} <span class="badge ${esc(i.status)}">${esc(statusOf(i.status).label)}</span></li>`).join("")}</ol>`
     : "";
   openDialog(`Wie wurde ${parLabel} ermittelt?`, how + list +
-    `<p class="muted">Ohne Gewähr – rechtsverbindlich ist allein das amtliche Bundesgesetzblatt.</p>`);
+    (isDraft() ? `<p class="muted">Ohne Gewähr. Maßgeblich ist allein die Drucksache des Deutschen Bundestages.</p>`
+      : `<p class="muted">Ohne Gewähr – rechtsverbindlich ist allein das amtliche Bundesgesetzblatt.</p>`));
 }
 
 function showHelp(section) {
@@ -1049,14 +1316,19 @@ function showHelp(section) {
 function route() {
   const m = PUBLICATION_ROUTE.exec(location.hash);
   const about = location.hash === ABOUT_ROUTE;
-  markCurrentNav(m ? null : about ? "about" : "list");
-  $("#fab-back").hidden = !(m || about); // PTL-11: back to the timeline, as the reader left it
-  if (!m && !about) rememberTimeline(location.hash.startsWith("#/?") ? location.hash : "#/");
-  if (m || about) { lens.entries = []; watchTimeline.disconnect(); }
+  const bill = BILL_ROUTE.exec(location.hash);
+  const bills = location.hash === BILLS_ROUTE;
+  const other = about || bill || bills;
+  markCurrentNav(m ? null : about ? "about" : bill || bills ? "bills" : "list"); // ENT-1
+  $("#fab-back").hidden = !(m || other); // PTL-11: back to the timeline, as the reader left it
+  if (!m && !other) rememberTimeline(location.hash.startsWith("#/?") ? location.hash : "#/");
+  if (m || other) { lens.entries = []; watchTimeline.disconnect(); }
   if (m) {
     openPublication(m[1], m[2], decodeURIComponent(m[3]));
     return;
   }
+  if (bill) { openBill(+bill[1], +bill[2]); return; }
+  if (bills) { openBills(); return; }
   state.currentId = null;
   state.current = null;
   showContents(null);
@@ -1082,7 +1354,7 @@ function rerender() {
     : active?.dataset?.view ? `[data-view="${CSS.escape(active.dataset.view)}"]` : null;
   const top = selector ? active.getBoundingClientRect().top : null;
   const tabs = $$('#main .tabs [role="tab"][aria-selected="true"]:not([data-tab="synopse"])').map((b) => b.id);
-  renderPublication();
+  if (isDraft()) renderDraft(); else renderPublication();
   for (const id of tabs) {
     const tab = document.getElementById(id);
     if (tab) selectTab(tab);
@@ -1096,7 +1368,8 @@ function rerender() {
 document.addEventListener("click", (ev) => {
   const t = ev.target;
   if (t.closest(".theme-switch")) { toggleTheme(); return; }
-  if (t.closest("#fab-menu")) { openMenu(); return; }
+  const menuButton = t.closest("#fab-menu, #nav-menu");
+  if (menuButton) { openMenu(menuButton); return; }
   if (t.closest('[data-action="skip"]')) { ev.preventDefault(); $("#main").focus(); return; }
   const order = t.closest("[data-order]");
   if (order) {
@@ -1452,11 +1725,14 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", showThemeB
 
 // ---------------------------------------------------------------- the menu of the phone layout (PTL-6)
 
-function openMenu() {
+/** `opener`: the round button of the phone layout, or "Menü" in a navbar too narrow for the names of the pages (NAV-3). */
+function openMenu(opener = $("#fab-menu")) {
   const menu = $("#menu");
   if (menu.open) return;
+  menu.opener = opener;
+  menu.classList.toggle("from-navbar", opener.id === "nav-menu"); // then at the top, where the navbar is
   menu.showModal();
-  $("#fab-menu").setAttribute("aria-expanded", "true");
+  opener.setAttribute("aria-expanded", "true");
 }
 
 /** Closes the menu; `quietly` when another window opens or a page is chosen: the focus moves on. */
@@ -1468,8 +1744,9 @@ function closeMenu(quietly = false) {
 }
 
 $("#menu").addEventListener("close", () => {
-  $("#fab-menu").setAttribute("aria-expanded", "false");
-  if (!$("#menu").quietly) returnFocus($("#fab-menu"));
+  const opener = $("#menu").opener || $("#fab-menu");
+  opener.setAttribute("aria-expanded", "false");
+  if (!$("#menu").quietly) returnFocus(opener, [$("#fab-menu"), $("#nav-menu")]);
   $("#menu").quietly = false;
 });
 $("#menu").addEventListener("click", (ev) => {
@@ -1488,9 +1765,12 @@ $("#dialog").addEventListener("close", () => returnFocus($("#dialog").opener));
    change of size this causes does not start a loop. */
 const navbar = $(".navbar");
 function fitNavbar() {
-  navbar.classList.remove("tight", "tighter");
-  if (navbar.scrollWidth > navbar.clientWidth) navbar.classList.add("tight");
-  if (navbar.scrollWidth > navbar.clientWidth) navbar.classList.add("tighter");
+  navbar.classList.remove("tight", "tighter", "tightest");
+  // the name next to the logo goes, then the long labels, then the pages move into the menu (NAV-3)
+  for (const step of ["tight", "tighter", "tightest"]) {
+    if (navbar.scrollWidth <= navbar.clientWidth) break;
+    navbar.classList.add(step);
+  }
 }
 let navbarFrame = 0;
 const watchNavbar = new ResizeObserver(() => {

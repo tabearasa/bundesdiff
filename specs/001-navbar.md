@@ -21,9 +21,10 @@ Navbar on every page:
 spec 004 replace it, PTL-1/PTL-5) with, in this order: the logo
 "bundesdiff" (link to the start page), "Veröffentlichungen" (the timeline, spec 002, as the
 reader left it: with the chosen "Art" and view – owner, 2026-11-01; on that timeline already,
-it goes to its top), "So
+it goes to its top), "Gesetzentwürfe" (the list of bills, spec 016 – added 2026-11-09), "So
 funktioniert's" (opens the help), "Über bundesdiff" (the about page, NAV-10), the search
-(SRCH-1) and the light/dark switch.
+(SRCH-1) and the light/dark switch. Where the names of the pages do not fit (NAV-3), an
+entry "Menü" stands in their place.
 
 **NAV-2** On the start page "Veröffentlichungen" and on the about page "Über bundesdiff" is
 marked as the current page, by more than colour (underline), and announced as current to
@@ -32,7 +33,12 @@ screen readers (`aria-current="page"`). On a publication no entry is marked.
 **NAV-3** The navbar is one row high on every screen it is shown on (all but the phone
 layout of PTL-1, so down to 320 px wide on low screens and at 400 % zoom), in portrait and
 landscape, and in both colour themes. Below 960 px the logo shows only "§"; below 820 px the
-entries show short labels – "Liste", "Hilfe", "Über". The light/dark switch (NAV-11) has
+entries show short labels – "Liste", "Entwürfe", "Hilfe", "Über". Below 480 px – and wherever
+the entries still do not fit, for example with wider text spacing – the three pages
+("Veröffentlichungen", "Gesetzentwürfe", "Über bundesdiff") are in the menu of PTL-6, opened by
+an entry "Menü" in their place; it opens at the top of the screen and scrolls where the screen
+is lower than the menu. (Added 2026-11-10 with spec 016: with a fourth page the entries need
+368 px in Firefox, a 320 px screen has room for 304 px.) The light/dark switch (NAV-11) has
 the same size everywhere. Screen
 readers always hear a full name ("bundesdiff – Startseite", "Hell / Dunkel umschalten").
 

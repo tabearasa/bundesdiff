@@ -168,6 +168,16 @@ a:hover, .linklike:hover { color: var(--accent); text-decoration-color: var(--ac
 .navbar.tight .brand-text { display: none; }
 .navbar.tighter .long { display: none; }
 .navbar.tighter .short { display: inline; }
+/* NAV-3: the names of four pages do not fit beside the logo, the help, the search and the switch
+   on the narrowest screens that still show the navbar (low screens, 400 % zoom: Firefox needs
+   472 px). There the pages are in the menu of the phone layout (PTL-6), opened by "Menü". */
+.nav-menu { display: none; }
+@media (max-width: 479px) {
+  .nav-menu { display: inline-block; }
+  .navbar .nav-item[data-nav] { display: none; }
+}
+.navbar.tightest .nav-menu { display: inline-block; }
+.navbar.tightest .nav-item[data-nav] { display: none; }
 @media (max-width: 400px) {
   .topbar { padding: 0 8px; }
   /* the free room is shared out between all entries, so they stay apart as far as it goes;
@@ -692,6 +702,7 @@ dialog[open] { animation: window-open .2s ease-out; }
 .domain { -webkit-hyphens: manual; hyphens: manual; }
 /* product names: no „bun-desdiff“, no „Git-Hub“; .welcome .name also beats „.welcome p“ */
 .name, .welcome .name { -webkit-hyphens: manual; hyphens: manual; }
+.abbr { -webkit-hyphens: manual; hyphens: manual; } /* the abbreviation of a law: "(InVorG)", not "(In-/VorG)" */
 .whole-date { white-space: nowrap; -webkit-hyphens: manual; hyphens: manual; }
 /* intro, notice and timeline share one text edge: the intro's 20 px on smaller screens */
 @media (max-width: 900px) {
@@ -867,6 +878,11 @@ dialog[open] { animation: window-open .2s ease-out; }
   width: min(300px, calc(100vw - 32px)); border: 1px solid var(--frame); border-radius: 3px;
   transform-origin: 26px calc(100% + 58px);
 }
+/* opened from the navbar (NAV-3): at the top, where its entry is; on a low screen it scrolls */
+.menu.from-navbar {
+  inset: 8px auto auto 8px; transform-origin: 70px 20px;
+  max-height: calc(100vh - 16px); overflow-y: auto;
+}
 .menu-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 6px 6px 14px; border-bottom: 1px solid var(--rule); }
 .menu-brand { display: flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; }
 .menu-brand .brand-mark { width: 30px; height: 30px; font-size: 19px; }
@@ -902,4 +918,72 @@ dialog[open] { animation: window-open .2s ease-out; }
     display: block; margin: 0 0 4px; text-align: center; font-size: 16px;
     font-variant: small-caps; letter-spacing: .12em; color: var(--accent);
   }
+}
+
+/* ---------- bills (spec 016) ---------- */
+/* the list of bills */
+.bills .bills-body { margin-top: 26px; }
+.bill-list { list-style: none; margin: 14px 0 0; padding: 0; border-top: 1px solid var(--rule-strong); }
+.bill-list li { padding: 16px 0 18px; border-bottom: 1px solid var(--rule); }
+/* the lead is short here (two lines on wide screens), the drop cap is taller: the paragraph
+   holds all of it – the letter reaches below its own line box, hence the padding */
+.bills .lead { display: flow-root; margin-bottom: .5em; }
+.bills .lead::first-letter { padding-bottom: .15em; }
+.welcome .bill-meta, .welcome .bill-laws { margin: 0; text-align: left; -webkit-hyphens: manual; hyphens: manual; }
+.bill-meta { font-size: 16px; color: var(--muted); }
+.bill-title {
+  display: block; margin: 4px 0; font-size: 22px; line-height: 1.35; color: var(--ink);
+  text-decoration-color: var(--accent); text-underline-offset: 3px; -webkit-hyphens: auto; hyphens: auto;
+}
+.bill-title:hover { color: var(--link); }
+.bill-laws { font-size: 17px; font-style: italic; color: var(--ink-soft); }
+.loading-line, .info-missing { font-style: italic; color: var(--muted); }
+.welcome .loading-line { text-align: center; }
+
+/* the page of a bill: said in words that this is a draft (ENT-6, ENT-A1) */
+.typ-entwurf { color: var(--accent); }
+.draft-notice {
+  max-width: 860px; margin: 22px auto 0; padding: 12px 18px;
+  border: 1px solid var(--rule-strong); border-left: 3px solid var(--accent); background: var(--paper-2);
+  font-size: 18px; line-height: 1.5;
+}
+.shown-count, .binding { max-width: 860px; margin: 14px auto 0; text-align: center; font-style: italic; color: var(--muted); }
+.shown-count { font-size: 17px; color: var(--ink-soft); }
+.binding { font-size: 16px; }
+.article .compared { max-width: 760px; margin: 8px auto 0; font-size: 17px; font-style: italic; color: var(--muted); }
+
+/* "Allgemeine Informationen" (ENT-12): Vorblatt and Begründung, one part opened at a time */
+.bill-info {
+  max-width: 1180px; margin: 0 auto 22px; padding: 22px 28px 8px;
+  background: var(--paper); box-shadow: var(--shadow-page); border-radius: 2px;
+}
+.bill-info h2 {
+  margin: 0 0 6px; text-align: center; font-weight: normal; font-size: 23px;
+  font-variant: small-caps; letter-spacing: .05em; color: var(--accent);
+}
+.info-note { max-width: 860px; margin: 0 auto 16px; text-align: center; font-size: 17px; font-style: italic; color: var(--muted); }
+.bill-info details { max-width: 860px; margin: 0 auto; border-top: 1px solid var(--rule); }
+.bill-info summary {
+  display: flex; align-items: baseline; gap: 10px; padding: 12px 4px; cursor: pointer; list-style: none;
+  font-size: 19px; line-height: 1.35;
+}
+.bill-info summary::-webkit-details-marker { display: none; }
+/* open/closed is also said by the mark, not only by what follows */
+.bill-info summary::before {
+  content: "+"; content: "+" / ""; flex: none; width: 16px; text-align: center; font-family: var(--mono); color: var(--accent);
+}
+.bill-info details[open] > summary::before { content: "−"; content: "−" / ""; }
+.bill-info summary:hover .info-title { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+.info-body { padding: 2px 4px 20px 30px; }
+.info-body p { margin: 0 0 10px; -webkit-hyphens: auto; hyphens: auto; }
+.info-body :is(h3, h4, h5, h6) { margin: 20px 0 6px; line-height: 1.3; -webkit-hyphens: auto; hyphens: auto; }
+.info-body > :first-child { margin-top: 0; }
+.info-body h3 { font-size: 20px; font-weight: normal; font-variant: small-caps; letter-spacing: .04em; color: var(--accent); }
+.info-body h4 { font-size: 19px; }
+.info-body h5 { font-size: 18px; font-style: italic; }
+.info-body h6 { font-size: 17px; font-style: italic; font-weight: normal; }
+@media (max-width: 900px) {
+  .bill-info { padding: 18px 14px 4px; }
+  .info-body { padding-left: 4px; }
+  .draft-notice { padding: 10px 14px; }
 }

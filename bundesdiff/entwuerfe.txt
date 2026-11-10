@@ -1,0 +1,3 @@
+# Gesetzentwürfe, die bundesdiff zeigt (spec 016): eine Drucksache des Bundestages je Zeile,
+# Wahlperiode/Nummer. Jede wird einmal ausgewertet; die Liste wird von Hand gepflegt.
+21/6588

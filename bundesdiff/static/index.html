@@ -18,7 +18,10 @@
   <header class="topbar">
     <nav class="navbar" aria-label="Hauptnavigation">
       <a class="brand" href="#/" aria-label="bundesdiff – Startseite"><span class="brand-mark" aria-hidden="true">§</span><span class="brand-text name">bundesdiff</span></a>
+      <!-- NAV-3: only where the names of the pages do not fit; opens the menu of PTL-6 -->
+      <button class="nav-item nav-menu" id="nav-menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="menu">Menü</button>
       <a class="nav-item" href="#/" data-nav="list"><span class="long">Veröffentlichungen</span><span class="short">Liste</span></a>
+      <a class="nav-item" href="#/entwuerfe" data-nav="bills" aria-label="Gesetzentwürfe"><span class="long">Gesetzentwürfe</span><span class="short">Entwürfe</span></a>
       <button class="nav-item" id="nav-help" data-help=""><span class="long">So funktioniert's</span><span class="short">Hilfe</span></button>
       <a class="nav-item" href="#/ueber" data-nav="about"><span class="long">Über <span class="name">bundesdiff</span></span><span class="short">Über</span></a>
       <button class="search-btn" id="search-open" aria-label="Suchen" aria-haspopup="dialog" aria-keyshortcuts="Control+K Meta+K /">
@@ -85,6 +88,7 @@
     </div>
     <ul class="menu-list">
       <li><a href="#/" data-nav="list">Veröffentlichungen</a></li>
+      <li><a href="#/entwuerfe" data-nav="bills">Gesetzentwürfe</a></li>
       <li><a href="#/ueber" data-nav="about">Über <span class="name">bundesdiff</span></a></li>
     </ul>
     <div class="menu-theme">
@@ -150,11 +154,14 @@
         <dt>Inkrafttreten</dt><dd>Der Tag, ab dem eine Regelung gilt. Er kann nach der Veröffentlichung liegen.</dd>
         <dt>„(weggefallen)“</dt><dd>Platzhalter für eine aufgehobene Vorschrift, damit sich die Nummerierung der übrigen nicht verschiebt.</dd>
         <dt>Synopse</dt><dd>Fachwort für die Gegenüberstellung von alter und neuer Fassung – das, was <span class="name">bundesdiff</span> erzeugt.</dd>
+        <dt>Gesetzentwurf</dt><dd>Ein Vorschlag für ein neues Gesetz oder für die Änderung bestehender Gesetze. Er gilt noch nicht: Der Bundestag berät ihn und kann ihn ändern, beschließen oder ablehnen. Erst das beschlossene und im Bundesgesetzblatt veröffentlichte Gesetz gilt.</dd>
+        <dt>Drucksache</dt><dd>So heißen die Unterlagen des Bundestages, zum Beispiel ein Gesetzentwurf. Jede hat eine Nummer: „21/6588“ ist die Drucksache 6588 der 21. Wahlperiode – das ist die Zeit zwischen zwei Bundestagswahlen.</dd>
+        <dt>Vorblatt und Begründung</dt><dd>Ein Gesetzentwurf beginnt mit einer kurzen Zusammenfassung, dem Vorblatt, und endet mit einer Begründung. Beides schreibt, wer den Entwurf vorlegt – zum Beispiel die Bundesregierung.</dd>
       </dl>
     </section>
     <section id="help-sources">
       <h3>Quellen und Grenzen</h3>
-      <p>Daten stammen von <span class="domain">recht.bund.de</span> (Bundesgesetzblatt), dem Rechtsinformationsportal des Bundes (<span class="domain">testphase.<wbr>rechtsinformationen.<wbr>bund.de</span>), <span class="domain">gesetze-im-internet.de</span> und dem Internet Archive (<span class="domain">archive.org</span>). Alles wird automatisch ausgewertet und kann Fehler enthalten. Rechtsverbindlich ist allein das amtliche Bundesgesetzblatt.</p>
+      <p>Daten stammen von <span class="domain">recht.bund.de</span> (Bundesgesetzblatt), dem Rechtsinformationsportal des Bundes (<span class="domain">testphase.<wbr>rechtsinformationen.<wbr>bund.de</span>), <span class="domain">gesetze-im-internet.de</span> und dem Internet Archive (<span class="domain">archive.org</span>). Gesetzentwürfe stammen vom Deutschen Bundestag (<span class="domain">dserver.<wbr>bundestag.de</span>). Alles wird automatisch ausgewertet und kann Fehler enthalten. Rechtsverbindlich ist allein das amtliche Bundesgesetzblatt.</p>
     </section>
   </template>
 
@@ -177,6 +184,7 @@
         <li><a href="https://www.recht.bund.de" target="_blank" rel="noopener"><span class="domain">recht.bund.de</span></a> – die amtliche Plattform des Bundesgesetzblatts. Von dort stammen die Veröffentlichungen.</li>
         <li><a href="https://testphase.rechtsinformationen.bund.de" target="_blank" rel="noopener">Rechtsinformationsportal des Bundes</a> und <a href="https://www.gesetze-im-internet.de" target="_blank" rel="noopener"><span class="domain">gesetze-im-internet.de</span></a> – der aktuelle Text der geänderten Gesetze.</li>
         <li><a href="https://archive.org" target="_blank" rel="noopener">Internet Archive</a> – ältere Fassungen, wenn der bisherige Text anders nicht zu bekommen ist.</li>
+        <li><a href="https://www.bundestag.de" target="_blank" rel="noopener">Deutscher Bundestag</a> – die Drucksachen mit den Gesetzentwürfen.</li>
       </ul>
       <h2>Darf man das?</h2>
       <p>
