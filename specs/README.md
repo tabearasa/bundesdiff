@@ -67,3 +67,4 @@ marked with its ID, or a test refers to an ID that no spec defines.
 | [014 When recht.bund.de cannot be reached](014-source-unreachable.md) | done |
 | [015 Link to the source code](015-source-code-link.md) | done |
 | [016 Gesetzentwürfe: what a bill would change (prototype with one bill)](016-gesetzentwuerfe.md) | done |
+| [017 Analyse again when a law could not be loaded](017-retry-failed-law-lookups.md) | done |

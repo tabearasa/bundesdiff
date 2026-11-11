@@ -26,7 +26,7 @@ import httpx
 
 from . import drafts, sources, store
 from . import listing as list_entry
-from .analysis import analyze
+from .analysis import analyze, now_utc, reanalyze, retry_due
 
 log = logging.getLogger(__name__)
 STATIC = Path(__file__).parent / "static"
@@ -50,12 +50,18 @@ def _write_json(path: Path, data) -> None:
     path.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")))
 
 
-def update_results(pubs: list[sources.Publication], max_new: int, retry_hours: float) -> dict:
-    """Analyze publications that have no (successful) result yet, newest first."""
-    stats = {"analyzed": 0, "failed": 0, "pending": 0}
+def update_results(pubs: list[sources.Publication], max_new: int, retry_hours: float,
+                   now: dt.datetime | None = None) -> dict:
+    """Analyze publications that have no (successful) result yet, newest first. Then analyse again
+    the Artikel whose law could not be loaded (spec 017; RTY-7: new publications come first)."""
+    now = now or now_utc()
+    stats = {"analyzed": 0, "failed": 0, "pending": 0, "retried": 0}
+    again: list[tuple[sources.Publication, dict]] = []
     for pub in pubs:
         result = store.load_result(pub.id)
         if result and not result.get("error"):
+            if any(retry_due(a, now) for a in result.get("articles") or []):
+                again.append((pub, result))
             continue
         if result and time.time() - result.get("failedAt", 0) < retry_hours * 3600:
             continue
@@ -71,6 +77,16 @@ def update_results(pubs: list[sources.Publication], max_new: int, retry_hours: f
             store.save_result(pub.id, {"error": str(e), "failedAt": time.time(),
                                        "publication": {"issued": pub.date}})
             stats["failed"] += 1
+    for pub, result in again:
+        if stats["analyzed"] + stats["failed"] + stats["retried"] >= max_new:
+            stats["pending"] += 1
+            continue
+        try:
+            store.save_result(pub.id, reanalyze(pub, result, now))
+            stats["retried"] += 1
+            log.info("analysed again %s", pub.fundstelle)
+        except Exception:  # noqa: BLE001 – the stored result stays; the next run tries again
+            log.exception("could not analyse %s again", pub.fundstelle)
     return stats
 
 
@@ -107,7 +123,7 @@ def export(site: Path, days: int = 365, max_new: int = 50, retry_hours: float = 
         shutil.rmtree(site)
     (site / "data").mkdir(parents=True)
 
-    totals: dict = {"analyzed": 0, "failed": 0, "pending": 0}
+    totals: dict = {"analyzed": 0, "failed": 0, "pending": 0, "retried": 0}
     from_saved, list_fetched = False, ""
     for teil in sources.FEEDS:
         try:
@@ -124,7 +140,8 @@ def export(site: Path, days: int = 365, max_new: int = 50, retry_hours: float = 
             log.error("%s – using the list saved at %s UTC", e, fetched)
         pubs = [p for p in feed if p.date >= cutoff]
         if not from_saved:
-            for k, v in update_results(pubs, max_new - totals["analyzed"] - totals["failed"], retry_hours).items():
+            budget = max_new - totals["analyzed"] - totals["failed"] - totals["retried"]
+            for k, v in update_results(pubs, budget, retry_hours).items():
                 totals[k] += v
         listing = []
         for p in pubs:

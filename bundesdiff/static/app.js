@@ -825,6 +825,15 @@ function renderOther(a, i) {
     </article>`);
 }
 
+/** The current text of the law could not be loaded: what happened and what comes next (spec 017 RTY-4). */
+function lookupMessage(failed) {
+  if (failed.final) {
+    return `Der aktuelle Text dieses Gesetzes konnte nicht geladen werden. Die Änderungen stehen deshalb nur ${words().wording}.`;
+  }
+  return "Der aktuelle Text dieses Gesetzes konnte bei der Auswertung nicht geladen werden, weil die Quelle nicht antwortete. "
+    + `bundesdiff versucht es täglich erneut, bis zum\u00a0${formatDate(failed.until)}. Bis dahin stehen die Änderungen nur ${words().wording}.`;
+}
+
 function renderAmendment(a, i) {
   const law = a.law;
   const card = el(`
@@ -839,7 +848,8 @@ function renderAmendment(a, i) {
         </div>` : ""}
         ${law && isDraft() ? `<p class="compared">Verglichen mit der Fassung vom\u00a0${esc(formatDate(law.version))}.${law.newerThanDraft ? " Das Gesetz wurde nach dem Entwurf noch geändert. Einzelne Änderungen passen deshalb vielleicht nicht mehr." : ""}</p>` : ""}
       </header>
-      ${a.error ? `<div class="error">${esc(a.error)} Die Änderungen werden deshalb nur im Wortlaut angezeigt.</div>` : ""}
+      ${a.error ? `<div class="error">${a.lookupFailed ? esc(lookupMessage(a.lookupFailed))
+        : `${esc(a.error)} Die Änderungen werden deshalb nur im Wortlaut angezeigt.`}</div>` : ""}
       <div class="tabs" role="tablist">
         <button role="tab" id="tab-${i}-synopse" aria-controls="body-${i}-synopse" aria-selected="true" data-tab="synopse" class="active" title="Gegenüberstellung von bisherigem und neuem Text">${words().compareTab}<span class="count">${(a.pars || []).length}</span></button>
         <button role="tab" id="tab-${i}-befehle" aria-controls="body-${i}-befehle" aria-selected="false" tabindex="-1" data-tab="befehle" title="${words().wordingTitle}">${words().wordingTab}<span class="count">${(a.instructions || []).length}</span></button>
@@ -1025,6 +1035,7 @@ const WORDS = {
     compareTab: "Vorher / Nachher", wordingTab: "Wortlaut im Gesetzblatt", wordingTitle: "So steht die Änderung wörtlich im Gesetzblatt",
     wordingIntro: "Gesetzesänderungen werden als Anweisungen formuliert („… wird durch … ersetzt“). Hier steht jede Anweisung im Originalwortlaut – und ob <span class=\"name\">bundesdiff</span> sie anwenden konnte.",
     noPars: "Für dieses Gesetz konnte keine Gegenüberstellung erzeugt werden. Unter „Wortlaut im Gesetzblatt“ sehen Sie die Änderungen so, wie sie veröffentlicht wurden.",
+    wording: "im Wortlaut der Veröffentlichung",
     top: "↑ Zum Anfang der Veröffentlichung", contents: "Inhalt dieser Veröffentlichung", text: "Text der Veröffentlichung",
     changed: "Geändert wird",
   },
@@ -1033,6 +1044,7 @@ const WORDS = {
     compareTab: "Geltend / Entwurf", wordingTab: "Wortlaut im Entwurf", wordingTitle: "So steht die Änderung wörtlich im Entwurf",
     wordingIntro: "Gesetzesänderungen werden als Anweisungen formuliert („… wird durch … ersetzt“). Hier steht jede Anweisung im Originalwortlaut des Entwurfs – und ob <span class=\"name\">bundesdiff</span> sie anwenden konnte.",
     noPars: "Für dieses Gesetz konnte kein Vergleich erzeugt werden. Unter „Wortlaut im Entwurf“ sehen Sie die Änderungen so, wie sie im Entwurf stehen.",
+    wording: "im Wortlaut des Entwurfs",
     top: "↑ Zum Anfang des Entwurfs", contents: "Inhalt dieses Entwurfs", text: "Text des Entwurfs",
     changed: "Soll geändert werden",
   },

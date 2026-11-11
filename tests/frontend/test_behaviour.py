@@ -662,3 +662,28 @@ def test_source_paragraph_is_set_ragged_right(app, page, width):
     page = app(PAGES["about"])
     paragraph = page.locator("#main .about h2", has_text="Quelltext").locator("xpath=following-sibling::p[1]")
     assert paragraph.evaluate("p => getComputedStyle(p).textAlign") in ("left", "start")
+
+
+def _law_not_loaded(article: dict, final: bool = False) -> None:
+    """Spec 017: the Artikel as stored when the current text of its law could not be loaded."""
+    article.update(error="Der aktuelle Text dieses Gesetzes konnte nicht geladen werden.", pars=[], lookupFailed={
+        "first": "2026-11-10T19:35:00+00:00", "last": "2026-11-10T19:35:00+00:00", "tries": 1, "until": "2026-11-17",
+        **({"final": True} if final else {})})
+    for ins in article["instructions"]:
+        ins.update(status="unsupported", state=None)
+
+
+@pytest.mark.spec("RTY-4")
+@pytest.mark.parametrize("final", [False, True])
+def test_an_artikel_whose_law_did_not_load_says_what_happens_next(app, page, final):
+    data = json.loads((FIXTURES / "data" / "1" / "2026" / "309.json").read_text())
+    _law_not_loaded(data["articles"][1], final)
+    page.route("**/data/1/2026/309.json", lambda route: route.fulfill(json=data))
+    app(PAGES["amendment"])
+    expect(page.locator("#art-1 .error")).to_have_text(
+        "Der aktuelle Text dieses Gesetzes konnte nicht geladen werden. "
+        "Die Änderungen stehen deshalb nur im Wortlaut der Veröffentlichung." if final else
+        "Der aktuelle Text dieses Gesetzes konnte bei der Auswertung nicht geladen werden, weil die Quelle nicht "
+        "antwortete. bundesdiff versucht es täglich erneut, bis zum 17.11.2026. "
+        "Bis dahin stehen die Änderungen nur im Wortlaut der Veröffentlichung.")
+    expect(page.locator("#art-0 .error")).to_have_count(0)

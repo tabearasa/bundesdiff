@@ -169,8 +169,11 @@ after their date, not searched and not on the timeline.
 1. Checks out the `data` branch (created on the first run) into `store/`.
 2. `bundesdiff export`: analyzes up to 50 new publications from the last 365 days, newest
    first. For the first backfill (about 400 issues) run it by hand with `max_new` = 500.
-   Failed analyses are retried after 24 hours. Every request is tried 3 times on a timeout
-   or server error; the list of publications 4 times, 1, 5 and 15 minutes apart. Each
+   Failed analyses are retried after 24 hours. An Artikel whose law could not be loaded because
+   a source did not answer is analysed again by the next daily runs for 7 days, after the new
+   publications and within the 50 (spec 017); the rest of its publication stays as it is.
+   Every request is tried 3 times on a timeout or server error; the list of publications 4
+   times, 1, 5 and 15 minutes apart. Each
    successful fetch saves the list as `publications-1.json` in the store. If recht.bund.de
    stays unreachable, the site is built from that saved list, nothing new is analysed, the
    start page says how old the list is (after 36 hours), and the last job

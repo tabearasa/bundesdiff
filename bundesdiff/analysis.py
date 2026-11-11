@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import json
 import logging
 import re
 
@@ -25,6 +26,51 @@ def parse_german_date(text: str) -> dt.date | None:
     if m and m.group(2) in MONTHS:
         return dt.date(int(m.group(3)), MONTHS[m.group(2)], int(m.group(1)))
     return None
+
+
+# --------------------------------------------------------------------------
+# Spec 017: an Artikel whose law could not be loaded because a source did not answer is analysed
+# again by the next daily runs, for 7 days.
+
+RETRY_AFTER = dt.timedelta(hours=20)  # the next daily run, even if it starts a little earlier (RTY-1)
+RETRY_DAYS = 7  # RTY-3
+LOOKUP_FAILED = "Der aktuelle Text dieses Gesetzes konnte nicht geladen werden."
+OLD_LOOKUP_ERROR = "Fehler bei der Suche des Gesetzes:"  # how such failures were stored before (RTY-5)
+
+
+def now_utc() -> dt.datetime:
+    return dt.datetime.now(dt.UTC)
+
+
+def _source_silent(e: Exception) -> bool:
+    """No answer, a server error, or no usable answer: worth another try on a later day (RTY-1)."""
+    return sources.connection_problem(e) or isinstance(e, (TimeoutError, ConnectionError, json.JSONDecodeError))
+
+
+def _lookup_failed(first: dt.datetime, now: dt.datetime, tries: int) -> dict:
+    until = (first + dt.timedelta(days=RETRY_DAYS)).date()
+    failed = {"first": first.isoformat(timespec="seconds"), "last": now.isoformat(timespec="seconds"),
+              "tries": tries, "until": until.isoformat()}
+    if now.date() >= until:
+        failed["final"] = True  # the try on the last day failed too (RTY-3)
+    return failed
+
+
+def retry_due(entry: dict, now: dt.datetime) -> bool:
+    """Is this Artikel to be analysed again in a run at ``now``?"""
+    failed = entry.get("lookupFailed")
+    if failed:
+        return not failed.get("final") and now - dt.datetime.fromisoformat(failed["last"]) >= RETRY_AFTER
+    return (entry.get("error") or "").startswith(OLD_LOOKUP_ERROR)
+
+
+def merge_retry(old: dict, new: dict, now: dt.datetime) -> dict:
+    """The new analysis of an Artikel; if its law failed to load again, the tries are counted on."""
+    if "lookupFailed" in new:
+        before = old.get("lookupFailed")
+        first = dt.datetime.fromisoformat(before["first"]) if before else now  # RTY-5: old ones start now
+        new["lookupFailed"] = _lookup_failed(first, now, (before["tries"] if before else 0) + 1)
+    return new
 
 
 def resolve_law(am: Amendment) -> sources.LawRef | None:
@@ -124,11 +170,13 @@ def _par_title(node: Node | None, key: str) -> str:
     return " ".join(x for x in (node.label, node.heading) if x)
 
 
-def article_entry(art, *, state_of, snapshots_of, force_state: str | None = None) -> dict:
+def article_entry(art, *, state_of, snapshots_of, force_state: str | None = None,
+                  now: dt.datetime | None = None) -> dict:
     """One Artikel as JSON: its text, or – if it amends a law – the instructions and the comparison.
 
     ``state_of(ref)``: whether the law text presumably contains the changes already ("pre"/"post");
-    ``snapshots_of(ref)``: where earlier versions of a § come from; ``force_state``: see engine.run.
+    ``snapshots_of(ref)``: where earlier versions of a § come from; ``force_state``: see engine.run;
+    ``now``: the time of this run (spec 017).
     """
     entry: dict = {"number": art.number, "heading": art.heading, "kind": "other", "text": art.text}
     am = analyze_article(art)
@@ -140,7 +188,12 @@ def article_entry(art, *, state_of, snapshots_of, force_state: str | None = None
     except Exception as e:  # noqa: BLE001
         log.exception("resolve law")
         ref = None
-        entry["error"] = f"Fehler bei der Suche des Gesetzes: {e}"
+        if _source_silent(e):  # tried again by the next daily runs (spec 017)
+            now = now or now_utc()
+            entry["error"] = LOOKUP_FAILED
+            entry["lookupFailed"] = _lookup_failed(now, now, 1)
+        else:  # not worded like the old failures, so it is not taken for one (RTY-5)
+            entry["error"] = f"Bei der Suche des Gesetzes trat ein Fehler auf: {e}"
     if ref is None:
         entry.setdefault("error", f"„{am.law_name}“ wurde in der Rechtsinformationsplattform nicht gefunden.")
         entry["instructions"] = [
@@ -173,8 +226,8 @@ def article_entry(art, *, state_of, snapshots_of, force_state: str | None = None
     return entry
 
 
-def analyze(teil: str, year: int, number: str) -> dict:
-    pub = sources.find_publication(teil, year, number)
+def _prepare(pub: sources.Publication):
+    """The issue's document, the day it was issued, and how to analyse its Artikel."""
     pdf = sources.fetch_pdf(pub)
     doc = split_document(extract_lines(pdf))
     law_date = parse_german_date(doc.date)
@@ -182,11 +235,15 @@ def analyze(teil: str, year: int, number: str) -> dict:
     if pub.date and re.match(r"\d{4}-\d{2}-\d{2}", pub.date):
         issued = dt.date.fromisoformat(pub.date[:10])
     issued = issued or law_date or dt.date.today()
-
     # Wayback snapshots must predate the day the issue was published
-    articles = [article_entry(art, state_of=lambda ref: default_state(ref, pub, law_date),
-                              snapshots_of=lambda ref: Snapshots(_snapshot_fetcher(ref, issued - dt.timedelta(days=1))))
-                for art in doc.articles]
+    return (doc, issued, lambda ref: default_state(ref, pub, law_date),
+            lambda ref: Snapshots(_snapshot_fetcher(ref, issued - dt.timedelta(days=1))))
+
+
+def analyze(teil: str, year: int, number: str) -> dict:
+    pub = sources.find_publication(teil, year, number)
+    doc, issued, state_of, snapshots_of = _prepare(pub)
+    articles = [article_entry(art, state_of=state_of, snapshots_of=snapshots_of) for art in doc.articles]
 
     return {
         "publication": {
@@ -198,3 +255,16 @@ def analyze(teil: str, year: int, number: str) -> dict:
         "preamble": doc.preamble,
         "articles": articles,
     }
+
+
+def reanalyze(pub: sources.Publication, result: dict, now: dt.datetime) -> dict:
+    """Analyse again the Artikel whose law could not be loaded; the others stay as they are (RTY-1)."""
+    doc, _, state_of, snapshots_of = _prepare(pub)
+    fresh = {art.number: art for art in doc.articles}
+    articles = []
+    for a in result.get("articles") or []:
+        if retry_due(a, now) and a.get("number") in fresh:
+            a = merge_retry(a, article_entry(fresh[a["number"]], state_of=state_of, snapshots_of=snapshots_of,
+                                             now=now), now)
+        articles.append(a)
+    return {**result, "articles": articles}

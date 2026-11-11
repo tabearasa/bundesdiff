@@ -5,12 +5,14 @@ The fixture is Drucksache 21/6588, cut down to five Artikel (see make_fixtures.p
 
 from __future__ import annotations
 
+import json
 import re
 
 import pytest
 from playwright.sync_api import Page, expect
 
-from .conftest import PAGES, THEMES, VIEWPORTS
+from .conftest import FIXTURES, PAGES, THEMES, VIEWPORTS
+from .test_behaviour import _law_not_loaded
 from .test_layout import _shot, layout_issues, settle
 
 BILLS = PAGES["bills"]
@@ -521,3 +523,13 @@ def test_heading_of_a_new_teil_stands_above_its_first_par(app):
     assert line.bounding_box()["y"] + line.bounding_box()["height"] <= title.bounding_box()["y"]
     expect(par.locator("table.diff")).not_to_contain_text("Achter Teil")
     expect(page.locator(".new-part")).to_have_count(1)  # only where the bill inserts a new part
+
+
+@pytest.mark.spec("RTY-4")
+def test_a_bill_whose_law_did_not_load_points_to_its_own_wording(app, page):
+    data = json.loads((FIXTURES / "data" / "entwurf" / "21" / "6588.json").read_text())
+    _law_not_loaded(next(a for a in data["articles"] if a["number"] == "12"))
+    page.route("**/data/entwurf/21/6588.json", lambda route: route.fulfill(json=data))
+    app(BILL)
+    expect(article(page, re.compile("Investitionsvorrang")).locator(".error")).to_have_text(re.compile(
+        r"bis zum\s17\.11\.2026\. Bis dahin stehen die Änderungen nur im Wortlaut des Entwurfs\.$"))

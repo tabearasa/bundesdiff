@@ -283,7 +283,9 @@ def gii_slug(title: str) -> str | None:
     for slug, _ in candidates[:6]:
         try:
             meta = _gii_meta(slug)
-        except (httpx.HTTPError, ET.ParseError, StopIteration, OSError):
+        except (httpx.HTTPError, ET.ParseError, StopIteration, OSError) as e:
+            if isinstance(e, httpx.HTTPError) and connection_problem(e):
+                raise  # no answer is not "no such law": tried again later (spec 017, RTY-2)
             continue
         if any(comparable(v) == want for v in meta.values() if v):
             return slug
@@ -296,7 +298,9 @@ def _gii_index() -> list[tuple[str, str, str]]:
     for part in [*"ABCDEFGHIJKLMNOPQRSTUVWXYZ", *"123456789"]:
         try:
             html = fetch(f"{GII}/Teilliste_{part}.html", max_age=7 * 86400).decode("latin-1")
-        except httpx.HTTPError:
+        except httpx.HTTPError as e:
+            if connection_problem(e):
+                raise  # no answer is not "no such law": tried again later (spec 017, RTY-2)
             continue
         for m in re.finditer(r'href="\./([^/"]+)/index\.html"><abbr title="([^"]*)">\s*([^<]+?)\s*</abbr>', html):
             out.append((m.group(1), normalize(m.group(3)), normalize(m.group(2))))

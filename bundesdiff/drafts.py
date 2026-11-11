@@ -11,6 +11,7 @@ Which bills are shown is a hand-kept list, ``entwuerfe.txt``.
 
 from __future__ import annotations
 
+import datetime as dt
 import json
 import logging
 import re
@@ -19,7 +20,7 @@ from pathlib import Path
 
 from . import drucksache, listing, sources, store
 from .amendments import split_document
-from .analysis import article_entry
+from .analysis import article_entry, merge_retry, now_utc, retry_due
 from .engine import Snapshots
 
 log = logging.getLogger(__name__)
@@ -47,26 +48,39 @@ def fetch_pdf(wp: int, number: int) -> bytes:
     return data
 
 
-def analyze(wp: int, number: int) -> tuple[dict, dict]:
-    """(comparison, general information) of one bill, both JSON-ready."""
+def _read(wp: int, number: int):
+    """The Drucksache and its bill, split into Artikel."""
     ds = drucksache.read(fetch_pdf(wp, number))
     if (ds.wp, ds.number) != (wp, number):
         raise LookupError(f"Die Datei ist Drucksache {ds.wp}/{ds.number}, nicht {wp}/{number}")
-    doc = split_document(ds.lines)
-    articles = [article_entry(art, state_of=lambda ref: "pre", snapshots_of=lambda ref: Snapshots(lambda key: None),
-                              force_state="pre")
-                for art in doc.articles]
+    return ds, split_document(ds.lines)
+
+
+def _entry(art, ds, now: dt.datetime | None = None) -> dict:
+    """One Artikel compared with the current law; nothing is calculated backwards (ENT-8)."""
+    a = article_entry(art, state_of=lambda ref: "pre", snapshots_of=lambda ref: Snapshots(lambda key: None),
+                      force_state="pre", now=now)
+    law = a.get("law")
+    if law:  # ENT-9: the law may have changed after the bill was written
+        law["newerThanDraft"] = bool(ds.date and str(law.get("version") or "")[:10] > ds.date)
+    return a
+
+
+def _counts(articles: list[dict]) -> dict:
     instructions = [i for a in articles for i in a.get("instructions") or []]
-    for a in articles:
-        law = a.get("law")
-        if law:  # ENT-9: the law may have changed after the bill was written
-            law["newerThanDraft"] = bool(ds.date and str(law.get("version") or "")[:10] > ds.date)
+    return {"shown": sum(i["status"] == "applied" for i in instructions), "total": len(instructions)}
+
+
+def analyze(wp: int, number: int) -> tuple[dict, dict]:
+    """(comparison, general information) of one bill, both JSON-ready."""
+    ds, doc = _read(wp, number)
+    articles = [_entry(art, ds) for art in doc.articles]
     result = {
         "draft": {"id": draft_id(wp, number), "wp": wp, "number": number, "title": doc.title or ds.title,
                   "date": ds.date, "kind": ds.kind, "author": ds.author, "pdf": drucksache.pdf_url(wp, number)},
         "preamble": doc.preamble,
         "articles": articles,
-        "counts": {"shown": sum(i["status"] == "applied" for i in instructions), "total": len(instructions)},
+        "counts": _counts(articles),
     }
     parts = info_parts(ds)
     # the comparison names the parts, so the page can list them without loading their text
@@ -133,12 +147,20 @@ def _save(wp: int, number: int, part: str, data: dict) -> None:
     path.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")))
 
 
-def update(retry_hours: float = 24) -> dict:
-    """Analyse every listed bill that has no (successful) result yet. A bill is analysed once."""
-    stats = {"analyzed": 0, "failed": 0}
+def update(retry_hours: float = 24, now: dt.datetime | None = None) -> dict:
+    """Analyse every listed bill that has no (successful) result yet. A bill is analysed once; only
+    Artikel whose law could not be loaded are analysed again (spec 017, RTY-6)."""
+    now = now or now_utc()
+    stats = {"analyzed": 0, "failed": 0, "retried": 0}
     for wp, number in listed():
         result = load(wp, number)
         if result and not result.get("error"):
+            if any(retry_due(a, now) for a in result.get("articles") or []):
+                try:
+                    _save(wp, number, "", reanalyze(wp, number, result, now))
+                    stats["retried"] += 1
+                except Exception:  # noqa: BLE001 – the stored result stays; the next run tries again
+                    log.exception("could not analyse Drucksache %s/%s again", wp, number)
             continue
         if result and time.time() - result.get("failedAt", 0) < retry_hours * 3600:
             continue
@@ -153,6 +175,16 @@ def update(retry_hours: float = 24) -> dict:
             _save(wp, number, "", {"error": str(e), "failedAt": time.time()})
             stats["failed"] += 1
     return stats
+
+
+def reanalyze(wp: int, number: int, result: dict, now: dt.datetime) -> dict:
+    """Analyse again the Artikel whose law could not be loaded; the others stay as they are."""
+    ds, doc = _read(wp, number)
+    fresh = {art.number: art for art in doc.articles}
+    articles = [merge_retry(a, _entry(fresh[a["number"]], ds, now), now)
+                if retry_due(a, now) and a.get("number") in fresh else a
+                for a in result.get("articles") or []]
+    return {**result, "articles": articles, "counts": _counts(articles)}
 
 
 def get(wp: int, number: int) -> dict:
