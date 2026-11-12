@@ -1,6 +1,30 @@
 {
-"fetched": "2026-11-11T00:06",
+"fetched": "2026-11-12T01:35",
 "publications": [
+{
+"teil": "1",
+"year": 2026,
+"number": "336",
+"title": "Verordnung zur Änderung der Verordnung über die Eignung der Ausbildungsstätte für die Berufsausbildung zum Landwirt und zur Landwirtin",
+"date": "2026-11-11",
+"typ": "Verordnung",
+"initiant": "Bundesministerium für Landwirtschaft, Ernährung und Heimat",
+"fundstelle": "BGBl. 2026 I Nr. 336 vom 11.11.2026",
+"sachgebiet": "Berufliche Bildung",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/336"
+},
+{
+"teil": "1",
+"year": 2026,
+"number": "335",
+"title": "Zweite Verordnung zur Änderung der Akkreditierungsstellengebührenverordnung",
+"date": "2026-11-11",
+"typ": "Verordnung",
+"initiant": "Bundesministerium für Wirtschaft und Energie",
+"fundstelle": "BGBl. 2026 I Nr. 335 vom 11.11.2026",
+"sachgebiet": "Sonstiges Wirtschaftsrecht",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/335"
+},
 {
 "teil": "1",
 "year": 2026,
@@ -5976,30 +6000,6 @@
 "fundstelle": "BGBl. 2025 I Nr. 221 vom 25.09.2025",
 "sachgebiet": "Öffentliche Informationstechnik",
 "link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/221"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "220",
-"title": "Künstlersozialabgabe-Verordnung 2026",
-"date": "2025-09-25",
-"typ": "Verordnung",
-"initiant": "Bundesministerium für Arbeit und Soziales",
-"fundstelle": "BGBl. 2025 I Nr. 220 vom 25.09.2025",
-"sachgebiet": "Künstlersozialversicherung",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/220"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "219",
-"title": "Fünfzehnte Verordnung zur Änderung der Zweihundertvierundzwanzigsten Durchführungsverordnung zur Luftverkehrs-Ordnung (Festlegung von Flugverfahren für An- und Abflüge nach Instrumentenflugregeln zum und vom Verkehrsflughafen Dortmund)",
-"date": "2025-09-24",
-"typ": "Verordnung",
-"initiant": "Bundesaufsichtsamt für Flugsicherung",
-"fundstelle": "BGBl. 2025 I Nr. 219 vom 24.09.2025",
-"sachgebiet": "Luftverkehr",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/219"
 }
 ]
 }
