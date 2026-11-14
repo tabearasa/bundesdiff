@@ -1,6 +1,18 @@
 {
-"fetched": "2026-11-13T00:34",
+"fetched": "2026-11-14T00:23",
 "publications": [
+{
+"teil": "1",
+"year": 2026,
+"number": "337",
+"title": "Dritte Verordnung zur Gewährung einer außergewöhnlichen Anpassungsbeihilfe für Erzeuger in bestimmten Agrarsektoren",
+"date": "2026-11-13",
+"typ": "Verordnung",
+"initiant": "Bundesministerium für Landwirtschaft, Ernährung und Heimat",
+"fundstelle": "BGBl. 2026 I Nr. 337 vom 13.11.2026",
+"sachgebiet": "Sonstige Marktordnungsvorschriften, EWG-Durchführungsbestimmungen",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/337"
+},
 {
 "teil": "1",
 "year": 2026,
@@ -5988,18 +6000,6 @@
 "fundstelle": "BGBl. 2025 I Nr. 222 vom 26.09.2025",
 "sachgebiet": "Besitz- und Verkehrsteuern, Vermögensabgaben; Bundesverfassungsgericht",
 "link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/222"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "221",
-"title": "Verordnung über Standards für den Onlinezugang zu Verwaltungsleistungen",
-"date": "2025-09-25",
-"typ": "Verordnung",
-"initiant": "Bundesministerium für Digitales und Staatsmodernisierung",
-"fundstelle": "BGBl. 2025 I Nr. 221 vom 25.09.2025",
-"sachgebiet": "Öffentliche Informationstechnik",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/221"
 }
 ]
 }
