@@ -1,6 +1,30 @@
 {
-"fetched": "2026-11-15T23:27",
+"fetched": "2026-11-17T02:30",
 "publications": [
+{
+"teil": "1",
+"year": 2026,
+"number": "339",
+"title": "Drittes Gesetz zur Änderung des Seelotsgesetzes",
+"date": "2026-11-16",
+"typ": "Gesetz",
+"initiant": "Bundesministerium für Verkehr",
+"fundstelle": "BGBl. 2026 I Nr. 339 vom 16.11.2026",
+"sachgebiet": "Seelotswesen; Pass-, Ausweis- und Meldewesen",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/339"
+},
+{
+"teil": "1",
+"year": 2026,
+"number": "338",
+"title": "Zweites Gesetz zur Änderung des Straßenverkehrsunfallstatistikgesetzes",
+"date": "2026-11-16",
+"typ": "Gesetz",
+"initiant": "Bundesministerium für Verkehr",
+"fundstelle": "BGBl. 2026 I Nr. 338 vom 16.11.2026",
+"sachgebiet": "Allgemeine Statistik des Straßenverkehrs",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/338"
+},
 {
 "teil": "1",
 "year": 2026,
@@ -5976,30 +6000,6 @@
 "fundstelle": "BGBl. 2025 I Nr. 224 vom 30.09.2025",
 "sachgebiet": "Luftverkehr",
 "link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/224"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "223",
-"title": "Zweite Verordnung zur Durchführung des Finanzausgleichsgesetzes im Ausgleichsjahr 2018",
-"date": "2025-09-29",
-"typ": "Verordnung",
-"initiant": "Bundesministerium der Finanzen",
-"fundstelle": "BGBl. 2025 I Nr. 223 vom 29.09.2025",
-"sachgebiet": "Finanzausgleich zwischen Bund und Ländern",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/223"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "222",
-"title": "Entscheidung des Bundesverfassungsgerichts",
-"date": "2025-09-26",
-"typ": "Sonstiges",
-"initiant": "Bundesministerium der Justiz und für Verbraucherschutz",
-"fundstelle": "BGBl. 2025 I Nr. 222 vom 26.09.2025",
-"sachgebiet": "Besitz- und Verkehrsteuern, Vermögensabgaben; Bundesverfassungsgericht",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/222"
 }
 ]
 }
