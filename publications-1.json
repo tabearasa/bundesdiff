@@ -1,6 +1,66 @@
 {
-"fetched": "2026-11-17T02:30",
+"fetched": "2026-11-18T01:42",
 "publications": [
+{
+"teil": "1",
+"year": 2026,
+"number": "343a",
+"title": "Verordnung zur Konkretisierung der Regelungen zur Anrechenbarkeit von Investitionen auf das Erreichen der Mindestinvestitionsschwellen bei Brennstoffwechselprojekten",
+"date": "2026-11-17",
+"typ": "Verordnung",
+"initiant": "Bundesministerium für Wirtschaft und Energie",
+"fundstelle": "BGBl. 2026 I Nr. 343a vom 17.11.2026",
+"sachgebiet": "Elektrizität und Gas",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/343a"
+},
+{
+"teil": "1",
+"year": 2026,
+"number": "343",
+"title": "Bekanntmachung über die Ausprägung von deutschen Euro-Gedenkmünzen im Nennwert von 5 Euro (Gedenkmünze „Ariane 6“)",
+"date": "2026-11-17",
+"typ": "Sonstiges",
+"initiant": "Bundesministerium der Finanzen",
+"fundstelle": "BGBl. 2026 I Nr. 343 vom 17.11.2026",
+"sachgebiet": "Ausprägung von Euro-Münzen",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/343"
+},
+{
+"teil": "1",
+"year": 2026,
+"number": "342",
+"title": "Bekanntmachung über die Ausprägung von deutschen Euro-Gedenkmünzen im Nennwert von 2 Euro (Gedenkmünze „Konrad Adenauer“)",
+"date": "2026-11-17",
+"typ": "Sonstiges",
+"initiant": "Bundesministerium der Finanzen",
+"fundstelle": "BGBl. 2026 I Nr. 342 vom 17.11.2026",
+"sachgebiet": "Ausprägung von Euro-Münzen",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/342"
+},
+{
+"teil": "1",
+"year": 2026,
+"number": "341",
+"title": "Bekanntmachung über die Ausprägung von deutschen Euro-Gedenkmünzen im Nennwert von 2 Euro (Gedenkmünze „Bremen“)",
+"date": "2026-11-17",
+"typ": "Sonstiges",
+"initiant": "Bundesministerium der Finanzen",
+"fundstelle": "BGBl. 2026 I Nr. 341 vom 17.11.2026",
+"sachgebiet": "Ausprägung von Euro-Münzen",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/341"
+},
+{
+"teil": "1",
+"year": 2026,
+"number": "340",
+"title": "Bekanntmachung über die Ausprägung von deutschen Euro-Gedenkmünzen im Nennwert von 10 Euro (Gedenkmünze „Rettungsdienste“)",
+"date": "2026-11-17",
+"typ": "Sonstiges",
+"initiant": "Bundesministerium der Finanzen",
+"fundstelle": "BGBl. 2026 I Nr. 340 vom 17.11.2026",
+"sachgebiet": "Ausprägung von Euro-Münzen",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/340"
+},
 {
 "teil": "1",
 "year": 2026,
@@ -5940,66 +6000,6 @@
 "fundstelle": "BGBl. 2025 I Nr. 229 vom 02.10.2025",
 "sachgebiet": "Luftverkehr",
 "link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/229"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "228",
-"title": "Sechste Verordnung zur Änderung der Versorgungsmedizin-Verordnung",
-"date": "2025-10-02",
-"typ": "Verordnung",
-"initiant": "Bundesministerium für Arbeit und Soziales",
-"fundstelle": "BGBl. 2025 I Nr. 228 vom 02.10.2025",
-"sachgebiet": "Kriegsbeschädigte und Kriegshinterbliebene",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/228"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "227",
-"title": "Bekanntmachung über das Inkrafttreten des Artikels 4 Nummer 2 des Gesetzes zur periodengerechten Veranschlagung von Zinsausgaben im Rahmen der staatlichen Kreditaufnahme und Dritten Gesetzes zur Weiterentwicklung der Qualität und zur Teilhabe in der Kindertagesbetreuung",
-"date": "2025-10-01",
-"typ": "Sonstiges",
-"initiant": "Bundesministerium der Finanzen",
-"fundstelle": "BGBl. 2025 I Nr. 227 vom 01.10.2025",
-"sachgebiet": "Finanzausgleich zwischen Bund und Ländern",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/227"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "226",
-"title": "Erste Verordnung zur Änderung der Darlehensverordnung",
-"date": "2025-10-01",
-"typ": "Verordnung",
-"initiant": "Bundesministerium für Forschung, Technologie und Raumfahrt",
-"fundstelle": "BGBl. 2025 I Nr. 226 vom 01.10.2025",
-"sachgebiet": "Bildung, Wissenschaft und Forschung",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/226"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "225",
-"title": "Vierte Verordnung zur Änderung der Zweihundertdreiundfünfzigsten Durchführungsverordnung zur Luftverkehrs-Ordnung (Festlegung von Flugverfahren für An- und Abflüge nach Instrumentenflugregeln zum und vom Verkehrsflughafen Neubrandenburg)",
-"date": "2025-10-01",
-"typ": "Verordnung",
-"initiant": "Bundesaufsichtsamt für Flugsicherung",
-"fundstelle": "BGBl. 2025 I Nr. 225 vom 01.10.2025",
-"sachgebiet": "Luftverkehr",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/225"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "224",
-"title": "Erste Verordnung zur Änderung der Zweihundertsiebenundvierzigsten Durchführungsverordnung zur Luftverkehrs-Ordnung (Festlegung von Flugverfahren für An- und Abflüge nach Instrumentenflugregeln zum und vom Flughafen Berlin Brandenburg)",
-"date": "2025-09-30",
-"typ": "Verordnung",
-"initiant": "Bundesaufsichtsamt für Flugsicherung",
-"fundstelle": "BGBl. 2025 I Nr. 224 vom 30.09.2025",
-"sachgebiet": "Luftverkehr",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/224"
 }
 ]
 }
