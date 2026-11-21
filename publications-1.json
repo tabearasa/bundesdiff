@@ -1,6 +1,30 @@
 {
-"fetched": "2026-11-20T01:20",
+"fetched": "2026-11-21T01:14",
 "publications": [
+{
+"teil": "1",
+"year": 2026,
+"number": "345",
+"title": "Vierzehnte Verordnung zur Änderung der Verordnung über Ausnahmen von straßenverkehrsrechtlichen Vorschriften für Fahrzeuge und Fahrzeugkombinationen mit Überlänge",
+"date": "2026-11-20",
+"typ": "Verordnung",
+"initiant": "Bundesministerium für Verkehr",
+"fundstelle": "BGBl. 2026 I Nr. 345 vom 20.11.2026",
+"sachgebiet": "Zulassung zum Straßenverkehr",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/345"
+},
+{
+"teil": "1",
+"year": 2026,
+"number": "344",
+"title": "Bekanntmachung der Neufassung der Tiergesundheitliche-In-vitro-Diagnostika-Verordnung",
+"date": "2026-11-20",
+"typ": "Sonstiges",
+"initiant": "Bundesministerium für Landwirtschaft, Ernährung und Heimat",
+"fundstelle": "BGBl. 2026 I Nr. 344 vom 20.11.2026",
+"sachgebiet": "Tierseuchenbekämpfung",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/344"
+},
 {
 "teil": "1",
 "year": 2026,
@@ -5976,30 +6000,6 @@
 "fundstelle": "BGBl. 2025 I Nr. 232 vom 02.10.2025",
 "sachgebiet": "Bundeshaushalt",
 "link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/232"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "231",
-"title": "Haushaltsbegleitgesetz 2025",
-"date": "2025-10-02",
-"typ": "Gesetz",
-"initiant": "Bundesministerium der Finanzen",
-"fundstelle": "BGBl. 2025 I Nr. 231 vom 02.10.2025",
-"sachgebiet": "Energieversorgung; Bundesanleihen; Krankheitsbekämpfung, Impfwesen; Bundeshaushalt; Wirtschaftsförderung; Bundesbürgschaften; Sozialgesetzbuch",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/231"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "230",
-"title": "Gesetz zur Errichtung eines Sondervermögens Infrastruktur und Klimaneutralität",
-"date": "2025-10-02",
-"typ": "Gesetz",
-"initiant": "Bundesministerium der Finanzen",
-"fundstelle": "BGBl. 2025 I Nr. 230 vom 02.10.2025",
-"sachgebiet": "Bundeshaushalt",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/230"
 }
 ]
 }
