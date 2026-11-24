@@ -1,6 +1,42 @@
 {
-"fetched": "2026-11-23T00:21",
+"fetched": "2026-11-24T04:27",
 "publications": [
+{
+"teil": "1",
+"year": 2026,
+"number": "348",
+"title": "Erste Verordnung zur Änderung der Immobiliar-Darlehensvergabe-Sachkunde-Verordnung",
+"date": "2026-11-23",
+"typ": "Verordnung",
+"initiant": "Bundesanstalt für Finanzdienstleistungsaufsicht",
+"fundstelle": "BGBl. 2026 I Nr. 348 vom 23.11.2026",
+"sachgebiet": "Aufsichtsrechtliche Vorschriften",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/348"
+},
+{
+"teil": "1",
+"year": 2026,
+"number": "347",
+"title": "Fünfte Verordnung zur Änderung der Frequenzverordnung",
+"date": "2026-11-23",
+"typ": "Verordnung",
+"initiant": "Bundesministerium für Digitales und Staatsmodernisierung",
+"fundstelle": "BGBl. 2026 I Nr. 347 vom 23.11.2026",
+"sachgebiet": "Deutsche Post AG, Deutsche Postbank AG, Deutsche Telekom AG",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/347"
+},
+{
+"teil": "1",
+"year": 2026,
+"number": "346",
+"title": "Verordnung zur Neufassung der Sicherheitsüberprüfungsfeststellungsverordnung",
+"date": "2026-11-23",
+"typ": "Verordnung",
+"initiant": "Bundesministerium des Innern",
+"fundstelle": "BGBl. 2026 I Nr. 346 vom 23.11.2026",
+"sachgebiet": "Verfassungsschutz, Nachrichtendienst",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/346"
+},
 {
 "teil": "1",
 "year": 2026,
@@ -5964,42 +6000,6 @@
 "fundstelle": "BGBl. 2025 I Nr. 235 vom 10.10.2025",
 "sachgebiet": "Berufliche Bildung",
 "link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/235"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "234",
-"title": "Bekanntmachung über die Übernahme des Beschlusses des Deutschen Bundestages betr. Aufhebung der Immunität von Mitgliedern des Bundestages und der Grundsätze in Immunitätsangelegenheiten",
-"date": "2025-10-09",
-"typ": "Sonstiges",
-"initiant": "Deutscher Bundestag",
-"fundstelle": "BGBl. 2025 I Nr. 234 vom 09.10.2025",
-"sachgebiet": "Bundestag",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/234"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "233",
-"title": "Gesetz zur Anpassung des Batterierechts an die Verordnung (EU) 2023/1542",
-"date": "2025-10-06",
-"typ": "Gesetz",
-"initiant": "Bundesministerium für Umwelt, Klimaschutz, Naturschutz und nukleare Sicherheit",
-"fundstelle": "BGBl. 2025 I Nr. 233 vom 06.10.2025",
-"sachgebiet": "Bürgerliches Gesetzbuch, Einführungsgesetz und zugehörige Gesetze; Umweltschutz; Nebengesetze zum Recht der Schuldverhältnisse; Behördenaufbau; Vorschriften gegen den unlauteren Wettbewerb; Aufsichtsrechtliche Vorschriften",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/233"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "232",
-"title": "Gesetz über die Feststellung des Bundeshaushaltsplans für das Haushaltsjahr 2025",
-"date": "2025-10-02",
-"typ": "Gesetz",
-"initiant": "Bundesministerium der Finanzen",
-"fundstelle": "BGBl. 2025 I Nr. 232 vom 02.10.2025",
-"sachgebiet": "Bundeshaushalt",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/232"
 }
 ]
 }
