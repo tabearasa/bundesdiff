@@ -1,6 +1,66 @@
 {
-"fetched": "2026-11-24T04:27",
+"fetched": "2026-11-25T03:04",
 "publications": [
+{
+"teil": "1",
+"year": 2026,
+"number": "353",
+"title": "Verordnung zur Neuregelung der Rohrfernleitungsverordnung",
+"date": "2026-11-24",
+"typ": "Verordnung",
+"initiant": "Bundesministerium für Umwelt, Klimaschutz, Naturschutz und nukleare Sicherheit",
+"fundstelle": "BGBl. 2026 I Nr. 353 vom 24.11.2026",
+"sachgebiet": "Genehmigungs- und überwachungsbedürftige Anlagen",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/353"
+},
+{
+"teil": "1",
+"year": 2026,
+"number": "352",
+"title": "Verordnung zur Umsetzung der Richtlinie (EU) 2024/1785 zur Änderung der Richtlinie 2010/75/EU über Industrieemissionen und zur Änderung der Anzeige- und Erlaubnisverordnung",
+"date": "2026-11-24",
+"typ": "Verordnung",
+"initiant": "Bundesministerium für Umwelt, Klimaschutz, Naturschutz und nukleare Sicherheit",
+"fundstelle": "BGBl. 2026 I Nr. 352 vom 24.11.2026",
+"sachgebiet": "Wasserwirtschaft; Umweltschutz",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/352"
+},
+{
+"teil": "1",
+"year": 2026,
+"number": "351",
+"title": "Verordnung zur Änderung von Bußgeldvorschriften der Gefahrstoffverordnung",
+"date": "2026-11-24",
+"typ": "Verordnung",
+"initiant": "Bundesministerium für Arbeit und Soziales",
+"fundstelle": "BGBl. 2026 I Nr. 351 vom 24.11.2026",
+"sachgebiet": "Sonstige Vorschriften",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/351"
+},
+{
+"teil": "1",
+"year": 2026,
+"number": "350",
+"title": "Vierte Verordnung zur Neufestsetzung der Neurenten-Faktoren nach § 178 Absatz 1 des Siebten Buches Sozialgesetzbuch",
+"date": "2026-11-24",
+"typ": "Verordnung",
+"initiant": "Bundesamt für soziale Sicherung",
+"fundstelle": "BGBl. 2026 I Nr. 350 vom 24.11.2026",
+"sachgebiet": "Sozialgesetzbuch",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/350"
+},
+{
+"teil": "1",
+"year": 2026,
+"number": "349",
+"title": "Zweiundzwanzigste Verordnung zur Änderung der Hunderteinundsechzigsten Durchführungsverordnung zur Luftverkehrs-Ordnung (Festlegung von Flugverfahren für An- und Abflüge nach Instrumentenflugregeln zum und vom Verkehrslandeplatz Bayreuth)",
+"date": "2026-11-24",
+"typ": "Verordnung",
+"initiant": "Bundesaufsichtsamt für Flugsicherung",
+"fundstelle": "BGBl. 2026 I Nr. 349 vom 24.11.2026",
+"sachgebiet": "Luftverkehr",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/349"
+},
 {
 "teil": "1",
 "year": 2026,
@@ -5940,66 +6000,6 @@
 "fundstelle": "BGBl. 2025 I Nr. 240 vom 20.10.2025",
 "sachgebiet": "Beamte",
 "link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/240"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "239",
-"title": "Verordnung zur Ablösung der Hundertachtundneunzigsten Durchführungsverordnung zur Luftverkehrs-Ordnung (Festlegung von Flugverfahren für An- und Abflüge nach Instrumentenflugregeln zum und vom Flughafen Leipzig/Halle)",
-"date": "2025-10-16",
-"typ": "Verordnung",
-"initiant": "Bundesaufsichtsamt für Flugsicherung",
-"fundstelle": "BGBl. 2025 I Nr. 239 vom 16.10.2025",
-"sachgebiet": "Luftverkehr",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/239"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "238",
-"title": "Verordnung zur Änderung der Tierschutz-Versuchstierverordnung",
-"date": "2025-10-15",
-"typ": "Verordnung",
-"initiant": "Bundesministerium für Landwirtschaft, Ernährung und Heimat",
-"fundstelle": "BGBl. 2025 I Nr. 238 vom 15.10.2025",
-"sachgebiet": "Tierschutz",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/238"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "237",
-"title": "Achte Verordnung zur vorübergehenden Abweichung von der Binnenschifffahrtsstraßen-Ordnung",
-"date": "2025-10-14",
-"typ": "Verordnung",
-"initiant": "Generaldirektion Wasserstraßen und Schifffahrt",
-"fundstelle": "BGBl. 2025 I Nr. 237 vom 14.10.2025",
-"sachgebiet": "Verkehrsordnung",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/237"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "236",
-"title": "Dreiundzwanzigste Verordnung zur Änderung der Arzneimittelverschreibungsverordnung",
-"date": "2025-10-13",
-"typ": "Verordnung",
-"initiant": "Bundesministerium für Gesundheit",
-"fundstelle": "BGBl. 2025 I Nr. 236 vom 13.10.2025",
-"sachgebiet": "Apotheken- und Arzneimittelwesen, Gifte",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/236"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "235",
-"title": "Bekanntmachung zur Fortschreibung der Höhe der Mindestvergütung für Berufsausbildungen nach dem Berufsbildungsgesetz (2026)",
-"date": "2025-10-10",
-"typ": "Sonstiges",
-"initiant": "Bundesministerium für Forschung, Technologie und Raumfahrt",
-"fundstelle": "BGBl. 2025 I Nr. 235 vom 10.10.2025",
-"sachgebiet": "Berufliche Bildung",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/235"
 }
 ]
 }
