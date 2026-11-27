@@ -1,6 +1,66 @@
 {
-"fetched": "2026-11-25T03:04",
+"fetched": "2026-11-27T02:17",
 "publications": [
+{
+"teil": "1",
+"year": 2026,
+"number": "358",
+"title": "Siebenundsechzigste Verordnung zur Änderung der Zweihundertfünfundfünfzigsten Durchführungsverordnung zur Luftverkehrs-Ordnung (Festlegung von Streckenführungen, Meldepunkten und Reiseflughöhen für Flüge nach Instrumentenflugregeln im kontrollierten Luftraum innerhalb der Bundesrepublik Deutschland)",
+"date": "2026-11-26",
+"typ": "Verordnung",
+"initiant": "Bundesaufsichtsamt für Flugsicherung",
+"fundstelle": "BGBl. 2026 I Nr. 358 vom 26.11.2026",
+"sachgebiet": "Luftverkehr",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/358"
+},
+{
+"teil": "1",
+"year": 2026,
+"number": "357",
+"title": "Achtzehnte Verordnung zur Änderung der Hundertneunundachtzigsten Durchführungsverordnung zur Luftverkehrs-Ordnung (Festlegung von Flugverfahren für An- und Abflüge nach Instrumentenflugregeln zum und vom Regionalflughafen Magdeburg/City)",
+"date": "2026-11-26",
+"typ": "Verordnung",
+"initiant": "Bundesaufsichtsamt für Flugsicherung",
+"fundstelle": "BGBl. 2026 I Nr. 357 vom 26.11.2026",
+"sachgebiet": "Luftverkehr",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/357"
+},
+{
+"teil": "1",
+"year": 2026,
+"number": "356",
+"title": "Gesetz zur Änderung des Fahrlehrergesetzes und anderer straßenverkehrsrechtlicher Gesetze",
+"date": "2026-11-25",
+"typ": "Gesetz",
+"initiant": "Bundesministerium für Verkehr",
+"fundstelle": "BGBl. 2026 I Nr. 356 vom 25.11.2026",
+"sachgebiet": "Allgemeine Statistik des Straßenverkehrs; Allgemeines Straßenverkehrsrecht",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/356"
+},
+{
+"teil": "1",
+"year": 2026,
+"number": "355",
+"title": "Gesetz zur Durchführung der Verordnung (EU) 2024/2847 über horizontale Cybersicherheitsanforderungen für Produkte mit digitalen Elementen (Cyberresilienz-Verordnung)",
+"date": "2026-11-25",
+"typ": "Gesetz",
+"initiant": "Bundesministerium des Innern",
+"fundstelle": "BGBl. 2026 I Nr. 355 vom 25.11.2026",
+"sachgebiet": "Deutsche Post AG, Deutsche Postbank AG, Deutsche Telekom AG; Öffentliche Informationstechnik; Elektrizität und Gas",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/355"
+},
+{
+"teil": "1",
+"year": 2026,
+"number": "354",
+"title": "Gesetz zur Änderung des Finanzausgleichsgesetzes 2026 und des Tabaksteuergesetzes",
+"date": "2026-11-25",
+"typ": "Gesetz",
+"initiant": "Bundesministerium der Finanzen",
+"fundstelle": "BGBl. 2026 I Nr. 354 vom 25.11.2026",
+"sachgebiet": "Verbrauchsteuern und Monopole; Finanzausgleich zwischen Bund und Ländern",
+"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2026/354"
+},
 {
 "teil": "1",
 "year": 2026,
@@ -5940,66 +6000,6 @@
 "fundstelle": "BGBl. 2025 I Nr. 245 vom 23.10.2025",
 "sachgebiet": "Luftverkehr",
 "link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/245"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "244",
-"title": "Vierte Verordnung zur Änderung der EEMD-Gebietsvorgabenverordnung und der EEMD-Zulassungsverordnung",
-"date": "2025-10-23",
-"typ": "Verordnung",
-"initiant": "Bundesamt für Logistik und Mobilität",
-"fundstelle": "BGBl. 2025 I Nr. 244 vom 23.10.2025",
-"sachgebiet": "Gebühren im Straßenverkehr",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/244"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "243",
-"title": "Verordnung zur Fortschreibung der Regelbedarfsstufen für das Jahr 2026",
-"date": "2025-10-22",
-"typ": "Verordnung",
-"initiant": "Bundesministerium für Arbeit und Soziales",
-"fundstelle": "BGBl. 2025 I Nr. 243 vom 22.10.2025",
-"sachgebiet": "Sozialgesetzbuch",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/243"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "242",
-"title": "Zweite Verordnung zur Änderung der Binnenschiffsuntersuchungsordnung und sonstiger schifffahrtsrechtlicher Vorschriften",
-"date": "2025-10-20",
-"typ": "Verordnung",
-"initiant": "Bundesministerium für Verkehr",
-"fundstelle": "BGBl. 2025 I Nr. 242 vom 20.10.2025",
-"sachgebiet": "Verkehrsordnung; Verwaltung und allgemeine Ordnung der Binnenschifffahrt; Schiffssicherheit; Sonstiges Binnenschifffahrtsrecht",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/242"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "241",
-"title": "Entscheidung des Bundesverfassungsgerichts",
-"date": "2025-10-20",
-"typ": "Sonstiges",
-"initiant": "Bundesministerium der Justiz und für Verbraucherschutz",
-"fundstelle": "BGBl. 2025 I Nr. 241 vom 20.10.2025",
-"sachgebiet": "Notare, Rechtsanwälte, Rechtsberater; Beurkundung; Bundesverfassungsgericht",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/241"
-},
-{
-"teil": "1",
-"year": 2025,
-"number": "240",
-"title": "Elfte Verordnung zur Änderung der Bundesbeihilfeverordnung",
-"date": "2025-10-20",
-"typ": "Verordnung",
-"initiant": "Bundesministerium des Innern",
-"fundstelle": "BGBl. 2025 I Nr. 240 vom 20.10.2025",
-"sachgebiet": "Beamte",
-"link": "https://www.recht.bund.de/eli/bund/bgbl-1/2025/240"
 }
 ]
 }
